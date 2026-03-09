@@ -1,7 +1,21 @@
-import { eq } from "drizzle-orm";
+import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
-import { InsertUser, users } from "../drizzle/schema";
-import { ENV } from './_core/env';
+import {
+  InsertUser,
+  users,
+  patientMedicalHistory,
+  patientInteractions,
+  medications,
+  medicationRecommendations,
+  auditLogs,
+  systemAlerts,
+  patientDocuments,
+  type PatientMedicalHistory,
+  type PatientInteraction,
+  type SystemAlert,
+  type AuditLog,
+} from "../drizzle/schema";
+import { ENV } from "./_core/env";
 
 let _db: ReturnType<typeof drizzle> | null = null;
 
@@ -56,8 +70,8 @@ export async function upsertUser(user: InsertUser): Promise<void> {
       values.role = user.role;
       updateSet.role = user.role;
     } else if (user.openId === ENV.ownerOpenId) {
-      values.role = 'admin';
-      updateSet.role = 'admin';
+      values.role = "admin";
+      updateSet.role = "admin";
     }
 
     if (!values.lastSignedIn) {
@@ -84,9 +98,324 @@ export async function getUserByOpenId(openId: string) {
     return undefined;
   }
 
-  const result = await db.select().from(users).where(eq(users.openId, openId)).limit(1);
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.openId, openId))
+    .limit(1);
 
   return result.length > 0 ? result[0] : undefined;
 }
 
-// TODO: add feature queries here as your schema grows.
+export async function getUserById(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get user: database not available");
+    return undefined;
+  }
+
+  const result = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Patient medical history queries
+export async function getOrCreatePatientMedicalHistory(
+  userId: number
+): Promise<PatientMedicalHistory> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const existing = await db
+    .select()
+    .from(patientMedicalHistory)
+    .where(eq(patientMedicalHistory.userId, userId))
+    .limit(1);
+
+  if (existing.length > 0) return existing[0];
+
+  await db
+    .insert(patientMedicalHistory)
+    .values({ userId });
+  
+  const result = await db
+    .select()
+    .from(patientMedicalHistory)
+    .where(eq(patientMedicalHistory.userId, userId))
+    .limit(1);
+  return result[0];
+}
+
+export async function updatePatientMedicalHistory(
+  userId: number,
+  data: Partial<PatientMedicalHistory>
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(patientMedicalHistory)
+    .set(data)
+    .where(eq(patientMedicalHistory.userId, userId));
+
+  const result = await db
+    .select()
+    .from(patientMedicalHistory)
+    .where(eq(patientMedicalHistory.userId, userId))
+    .limit(1);
+  return result[0];
+}
+
+// Patient interaction queries
+export async function createPatientInteraction(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .insert(patientInteractions)
+    .values(data);
+  
+  const result = await db
+    .select()
+    .from(patientInteractions)
+    .where(eq(patientInteractions.userId, data.userId))
+    .limit(1);
+  return result[0];
+}
+
+export async function getPatientInteractions(userId: number, limit = 50) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .select()
+    .from(patientInteractions)
+    .where(eq(patientInteractions.userId, userId))
+    .limit(limit);
+}
+
+export async function getPatientInteractionById(interactionId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db
+    .select()
+    .from(patientInteractions)
+    .where(eq(patientInteractions.id, interactionId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function updatePatientInteraction(
+  interactionId: number,
+  data: Partial<PatientInteraction>
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(patientInteractions)
+    .set(data)
+    .where(eq(patientInteractions.id, interactionId));
+
+  const result = await db
+    .select()
+    .from(patientInteractions)
+    .where(eq(patientInteractions.id, interactionId))
+    .limit(1);
+  return result[0];
+}
+
+export async function getFlaggedInteractions(limit = 50) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .select()
+    .from(patientInteractions)
+    .where(eq(patientInteractions.flaggedForReview, true))
+    .limit(limit);
+}
+
+// Medication queries
+export async function getMedicationByName(name: string) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db
+    .select()
+    .from(medications)
+    .where(eq(medications.name, name))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+export async function getMedicationById(medicationId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  const result = await db
+    .select()
+    .from(medications)
+    .where(eq(medications.id, medicationId))
+    .limit(1);
+
+  return result.length > 0 ? result[0] : undefined;
+}
+
+// Medication recommendation queries
+export async function createMedicationRecommendation(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .insert(medicationRecommendations)
+    .values(data);
+  
+  // Return the created record by querying it back
+  const result = await db
+    .select()
+    .from(medicationRecommendations)
+    .where(eq(medicationRecommendations.interactionId, data.interactionId))
+    .limit(1);
+  return result[0];
+}
+
+export async function getMedicationRecommendations(interactionId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .select()
+    .from(medicationRecommendations)
+    .where(eq(medicationRecommendations.interactionId, interactionId));
+}
+
+// Audit log queries
+export async function logAuditEvent(data: any) {
+  const db = await getDb();
+  if (!db) {
+    console.warn(
+      "[Database] Cannot log audit event: database not available"
+    );
+    return;
+  }
+
+  try {
+    await db.insert(auditLogs).values(data);
+  } catch (error) {
+    console.error("[Database] Failed to log audit event:", error);
+  }
+}
+
+export async function getAuditLogs(
+  userId?: number,
+  limit = 100
+): Promise<AuditLog[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  if (userId) {
+    return await db
+      .select()
+      .from(auditLogs)
+      .where(eq(auditLogs.userId, userId))
+      .limit(limit);
+  }
+
+  return await db.select().from(auditLogs).limit(limit);
+}
+
+// System alert queries
+export async function createSystemAlert(data: any): Promise<SystemAlert> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .insert(systemAlerts)
+    .values(data);
+  
+  // Return the created alert by querying it back
+  const result = await db
+    .select()
+    .from(systemAlerts)
+    .where(eq(systemAlerts.title, data.title))
+    .limit(1);
+  return result[0];
+}
+
+export async function getUnacknowledgedAlerts(): Promise<SystemAlert[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .select()
+    .from(systemAlerts)
+    .where(eq(systemAlerts.acknowledged, false));
+}
+
+export async function getSystemAlerts(limit = 100): Promise<SystemAlert[]> {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db.select().from(systemAlerts).limit(limit);
+}
+
+export async function acknowledgeSystemAlert(
+  alertId: number,
+  acknowledgedBy: number
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .update(systemAlerts)
+    .set({
+      acknowledged: true,
+      acknowledgedBy,
+      acknowledgedAt: new Date(),
+    })
+    .where(eq(systemAlerts.id, alertId));
+
+  // Return the updated alert
+  const result = await db
+    .select()
+    .from(systemAlerts)
+    .where(eq(systemAlerts.id, alertId))
+    .limit(1);
+  return result[0];
+}
+
+// Patient document queries
+export async function createPatientDocument(data: any) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  await db
+    .insert(patientDocuments)
+    .values(data);
+  
+  // Return the created document by querying it back
+  const result = await db
+    .select()
+    .from(patientDocuments)
+    .where(eq(patientDocuments.userId, data.userId))
+    .limit(1);
+  return result[0];
+}
+
+export async function getPatientDocuments(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .select()
+    .from(patientDocuments)
+    .where(eq(patientDocuments.userId, userId));
+}

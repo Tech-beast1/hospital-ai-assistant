@@ -1,0 +1,9 @@
+{
+  "query": "DROP TABLE IF EXISTS patientDocuments; DROP TABLE IF EXISTS systemAlerts; DROP TABLE IF EXISTS medicationRecommendations; DROP TABLE IF EXISTS medications; DROP TABLE IF EXISTS patientInteractions; DROP TABLE IF EXISTS patientMedicalHistory; DROP TABLE IF EXISTS auditLogs; DROP TABLE IF EXISTS users;",
+  "command": "mysql --batch --raw --column-names --default-character-set=utf8mb4 --host gateway04.us-east-1.prod.aws.tidbcloud.com --port 4000 --user 29Zgki9pePg5PK6.root --database EMwyecxw8qJwFqH6WwQMJu --execute DROP TABLE IF EXISTS patientDocuments; DROP TABLE IF EXISTS systemAlerts; DROP TABLE IF EXISTS medicationRecommendations; DROP TABLE IF EXISTS medications; DROP TABLE IF EXISTS patientInteractions; DROP TABLE IF EXISTS patientMedicalHistory; DROP TABLE IF EXISTS auditLogs; DROP TABLE IF EXISTS users;",
+  "rows": [],
+  "messages": [],
+  "stdout": "",
+  "stderr": "",
+  "execution_time_ms": 1231
+}
