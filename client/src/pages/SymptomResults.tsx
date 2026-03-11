@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
@@ -25,14 +25,21 @@ interface AnalysisResult {
 
 export default function SymptomResults() {
   const [, navigate] = useLocation();
+  const params = useParams();
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  // Get the interaction ID from URL params
+  // Get the interaction ID from route params or URL query params
   useEffect(() => {
-    const params = new URLSearchParams(window.location.search);
-    const interactionId = params.get("id");
+    let interactionId: string | undefined = params?.id;
+    
+    // Fallback to query params if route param not available
+    if (!interactionId) {
+      const queryParams = new URLSearchParams(window.location.search);
+      const queryId = queryParams.get("id");
+      if (queryId) interactionId = queryId;
+    }
 
     if (!interactionId) {
       setError("No analysis results found. Please complete the symptom assessment again.");
@@ -40,11 +47,14 @@ export default function SymptomResults() {
       return;
     }
 
+    // Parse ID if it's a string
+    const idNum = typeof interactionId === 'string' ? parseInt(interactionId) : interactionId;
+
     const fetchResults = async () => {
       try {
         setLoading(true);
         // Use direct fetch since we need to call this on demand
-        const response = await fetch(`/api/trpc/patient.getInteractionById?input=${JSON.stringify({interactionId: parseInt(interactionId)})}`);
+        const response = await fetch(`/api/trpc/patient.getInteractionById?input=${JSON.stringify({interactionId: idNum})}`);
         const data = await response.json();
         const interaction = data.result?.data;
 
