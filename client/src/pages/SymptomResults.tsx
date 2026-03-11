@@ -30,64 +30,85 @@ export default function SymptomResults() {
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [interactionId, setInteractionId] = useState<number | null>(null);
 
-  // Get the interaction ID from route params or URL query params
+  // Extract interaction ID from route params
   useEffect(() => {
-    if (!isAuthenticated) {
-      setError("Please log in to view your results.");
-      setLoading(false);
-      return;
-    }
-
-    let interactionId: string | undefined = params?.id;
+    let id: string | undefined = params?.id;
     
     // Fallback to query params if route param not available
-    if (!interactionId) {
+    if (!id) {
       const queryParams = new URLSearchParams(window.location.search);
       const queryId = queryParams.get("id");
-      if (queryId) interactionId = queryId;
+      if (queryId) id = queryId;
     }
 
-    if (!interactionId) {
+    if (!id) {
       setError("No analysis results found. Please complete the symptom assessment again.");
       setLoading(false);
       return;
     }
 
-    // Parse ID if it's a string
-    const idNum = typeof interactionId === 'string' ? parseInt(interactionId) : interactionId;
+    const idNum = typeof id === 'string' ? parseInt(id) : id;
+    setInteractionId(idNum);
+  }, [params?.id]);
 
-    const fetchResults = async () => {
-      try {
-        setLoading(true);
-        
-        // Use tRPC client to fetch with proper authentication
-        const utils = trpc.useUtils();
-        const interaction = await utils.client.patient.getInteractionById.query({ 
-          interactionId: idNum 
-        });
+  // Fetch results using tRPC when ID is available and user is authenticated
+  const { data: interaction, isLoading, error: queryError } = trpc.patient.getInteractionById.useQuery(
+    { interactionId: interactionId! },
+    {
+      enabled: !!interactionId && isAuthenticated,
+      retry: 1,
+    }
+  );
 
-        if (!interaction || !interaction.aiAnalysis) {
-          setError("Unable to load analysis results. The analysis data may not be available yet.");
-          return;
-        }
+  // Process interaction data
+  useEffect(() => {
+    if (isLoading) {
+      setLoading(true);
+      return;
+    }
 
-        const analysisData = JSON.parse(interaction.aiAnalysis);
-        setResult({
-          interactionId: interaction.id,
-          analysis: analysisData,
-          disclaimers: analysisData.disclaimers || [],
-        });
-      } catch (err) {
-        console.error("Error fetching results:", err);
-        setError("An error occurred while loading your results. Please try again.");
-      } finally {
-        setLoading(false);
-      }
-    };
+    if (queryError) {
+      console.error("Query error:", queryError);
+      setError("Failed to load your analysis results. Please try again.");
+      setLoading(false);
+      return;
+    }
 
-    fetchResults();
-  }, [isAuthenticated, params?.id]);
+    if (!interaction) {
+      setError("Unable to load analysis results. Please try again.");
+      setLoading(false);
+      return;
+    }
+
+    if (!interaction.aiAnalysis) {
+      setError("The analysis data is not available yet. Please try again later.");
+      setLoading(false);
+      return;
+    }
+
+    try {
+      const analysisData = JSON.parse(interaction.aiAnalysis);
+      setResult({
+        interactionId: interaction.id,
+        analysis: analysisData,
+        disclaimers: analysisData.disclaimers || [],
+      });
+      setLoading(false);
+    } catch (err) {
+      console.error("Error parsing analysis data:", err);
+      setError("Error processing your analysis results.");
+      setLoading(false);
+    }
+  }, [interaction, isLoading, queryError]);
+
+  // Check authentication
+  useEffect(() => {
+    if (!isAuthenticated && !loading) {
+      setError("Please log in to view your results.");
+    }
+  }, [isAuthenticated, loading]);
 
   const getUrgencyColor = (level: string) => {
     switch (level) {
@@ -172,9 +193,6 @@ export default function SymptomResults() {
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-teal-900 to-orange-900 p-4">
         <div className="max-w-2xl mx-auto pt-20 text-center">
           <p className="text-white text-lg mb-4">No results available</p>
-          {!isAuthenticated && (
-            <p className="text-cyan-300 mb-6">Please log in to view your assessment results.</p>
-          )}
           <Button
             onClick={() => navigate("/intake")}
             className="bg-cyan-500 hover:bg-cyan-600"
