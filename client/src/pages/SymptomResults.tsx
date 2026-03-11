@@ -5,7 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2, Clock, Home, Download, Share2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
-import { Streamdown } from "streamdown";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 interface AnalysisResult {
   interactionId: number;
@@ -26,12 +26,19 @@ interface AnalysisResult {
 export default function SymptomResults() {
   const [, navigate] = useLocation();
   const params = useParams();
+  const { isAuthenticated } = useAuth();
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
   // Get the interaction ID from route params or URL query params
   useEffect(() => {
+    if (!isAuthenticated) {
+      setError("Please log in to view your results.");
+      setLoading(false);
+      return;
+    }
+
     let interactionId: string | undefined = params?.id;
     
     // Fallback to query params if route param not available
@@ -53,13 +60,15 @@ export default function SymptomResults() {
     const fetchResults = async () => {
       try {
         setLoading(true);
-        // Use direct fetch since we need to call this on demand
-        const response = await fetch(`/api/trpc/patient.getInteractionById?input=${JSON.stringify({interactionId: idNum})}`);
-        const data = await response.json();
-        const interaction = data.result?.data;
+        
+        // Use tRPC client to fetch with proper authentication
+        const utils = trpc.useUtils();
+        const interaction = await utils.client.patient.getInteractionById.query({ 
+          interactionId: idNum 
+        });
 
         if (!interaction || !interaction.aiAnalysis) {
-          setError("Unable to load analysis results. Please try again.");
+          setError("Unable to load analysis results. The analysis data may not be available yet.");
           return;
         }
 
@@ -78,7 +87,7 @@ export default function SymptomResults() {
     };
 
     fetchResults();
-  }, []);
+  }, [isAuthenticated, params?.id]);
 
   const getUrgencyColor = (level: string) => {
     switch (level) {
@@ -160,12 +169,15 @@ export default function SymptomResults() {
 
   if (!result) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-teal-900 to-orange-900 flex items-center justify-center">
-        <div className="text-center">
-          <p className="text-white text-lg">No results available</p>
+      <div className="min-h-screen bg-gradient-to-br from-slate-900 via-teal-900 to-orange-900 p-4">
+        <div className="max-w-2xl mx-auto pt-20 text-center">
+          <p className="text-white text-lg mb-4">No results available</p>
+          {!isAuthenticated && (
+            <p className="text-cyan-300 mb-6">Please log in to view your assessment results.</p>
+          )}
           <Button
             onClick={() => navigate("/intake")}
-            className="mt-4 bg-cyan-500 hover:bg-cyan-600"
+            className="bg-cyan-500 hover:bg-cyan-600"
           >
             Start New Assessment
           </Button>
@@ -290,7 +302,6 @@ export default function SymptomResults() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button
             onClick={() => {
-              // In a real app, this would generate a PDF or shareable link
               alert("Download feature coming soon. Please save this page or take a screenshot to share with your healthcare provider.");
             }}
             variant="outline"
@@ -301,7 +312,6 @@ export default function SymptomResults() {
           </Button>
           <Button
             onClick={() => {
-              // In a real app, this would generate a shareable link
               alert("Share feature coming soon. You can copy the URL to share with your healthcare provider.");
             }}
             variant="outline"
