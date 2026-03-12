@@ -239,10 +239,19 @@ IMPORTANT: This is for clinical decision support only. Always emphasize that a l
         try {
           const content = llmResponse.choices[0].message.content;
           const contentStr = typeof content === "string" ? content : JSON.stringify(content);
+          console.log("[LLM Response]", { contentStr: contentStr.substring(0, 200) });
           analysis = JSON.parse(contentStr);
-        } catch {
+          console.log("[Analysis Parsed]", { urgencyLevel: analysis.urgencyLevel, conditionCount: analysis.possibleConditions?.length });
+        } catch (err) {
+          console.error("[LLM Parse Error]", err, { content: llmResponse.choices[0].message.content });
           analysis = {
-            possibleConditions: [],
+            possibleConditions: [
+              {
+                condition: "Unable to analyze symptoms",
+                confidence: 0.5,
+                reasoning: "The AI analysis system encountered an error. Please consult with a healthcare professional.",
+              },
+            ],
             urgencyLevel: "moderate",
             flagForReview: true,
             recommendations: [

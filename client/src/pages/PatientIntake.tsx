@@ -96,7 +96,17 @@ export default function PatientIntake() {
         language,
       });
 
-      // Navigate to results
+      // Store the analysis data in sessionStorage so the results page can access it
+      sessionStorage.setItem(
+        `analysis_${result.interactionId}`,
+        JSON.stringify({
+          interactionId: result.interactionId,
+          analysis: result.analysis,
+          disclaimers: result.disclaimers,
+        })
+      );
+
+      // Navigate to results with the interaction ID
       setLocation(`/results/${result.interactionId}`);
     } catch (error) {
       console.error("Error submitting intake form:", error);
@@ -128,430 +138,363 @@ export default function PatientIntake() {
 
           {/* Medical Disclaimer */}
           <Card className="mb-8 border-orange-500/50 bg-slate-900/80 backdrop-blur">
-            <div className="p-6">
-              <div className="flex gap-3 mb-4">
-                <AlertCircle className="w-6 h-6 text-orange-400 flex-shrink-0 mt-1" />
-                <div>
-                  <h3 className="font-bold text-orange-300 mb-2">Medical Disclaimer</h3>
-                  <p className="text-sm text-gray-300">
-                    This AI assistant provides clinical decision support only and is <strong>NOT a substitute for professional medical advice</strong>. 
-                    All recommendations must be reviewed and approved by a licensed healthcare provider. In case of emergency, please call 911 or visit your nearest emergency room immediately.
-                  </p>
-                </div>
+            <div className="p-4 flex gap-3">
+              <AlertCircle className="h-5 w-5 text-orange-500 flex-shrink-0 mt-0.5" />
+              <div>
+                <h3 className="font-semibold text-orange-300 mb-2">Medical Disclaimer</h3>
+                <p className="text-sm text-gray-300">
+                  This AI assistant provides informational support only and is NOT a substitute for professional medical advice. Always consult with a licensed healthcare provider for diagnosis and treatment. In medical emergencies, call 911 immediately.
+                </p>
               </div>
             </div>
           </Card>
 
-          {/* Main Form Card */}
-          <Card className="border-cyan-500/30 bg-slate-900/90 backdrop-blur-xl shadow-2xl">
-            <div className="p-8">
-              {/* Step Indicator */}
-              <div className="flex justify-between mb-8">
-                {[1, 2, 3].map((s) => (
-                  <div key={s} className="flex flex-col items-center flex-1">
-                    <div
-                      className={`w-10 h-10 rounded-full flex items-center justify-center font-bold transition-all ${
-                        step >= s
-                          ? "bg-cyan-500 text-white"
-                          : "bg-slate-700 text-gray-400"
-                      }`}
-                    >
-                      {s}
-                    </div>
-                    <p className="text-xs text-gray-400 mt-2">
-                      {s === 1 ? "Symptoms" : s === 2 ? "History" : "Review"}
-                    </p>
+          {/* Step 1: Symptoms */}
+          {step === 1 && (
+            <Card className="border-cyan-500/30 bg-slate-900/80 backdrop-blur p-6 mb-6">
+              <h2 className="text-2xl font-bold text-white mb-6">Step 1: Describe Your Symptoms</h2>
+
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-cyan-300 font-semibold mb-2">
+                    Symptom Name
+                  </label>
+                  <Input
+                    placeholder="e.g., Headache, Fever, Cough"
+                    value={currentSymptom.name}
+                    onChange={(e) =>
+                      setCurrentSymptom({ ...currentSymptom, name: e.target.value })
+                    }
+                    className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-cyan-300 font-semibold mb-2">
+                    Duration
+                  </label>
+                  <Input
+                    placeholder="e.g., 3 days, 1 week"
+                    value={currentSymptom.duration}
+                    onChange={(e) =>
+                      setCurrentSymptom({ ...currentSymptom, duration: e.target.value })
+                    }
+                    className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-cyan-300 font-semibold mb-2">
+                    Severity (1-10)
+                  </label>
+                  <input
+                    type="range"
+                    min="1"
+                    max="10"
+                    value={currentSymptom.severity}
+                    onChange={(e) =>
+                      setCurrentSymptom({
+                        ...currentSymptom,
+                        severity: parseInt(e.target.value),
+                      })
+                    }
+                    className="w-full"
+                  />
+                  <div className="text-center text-cyan-300 font-semibold mt-2">
+                    {currentSymptom.severity}/10
                   </div>
-                ))}
+                </div>
+
+                <Button
+                  onClick={handleAddSymptom}
+                  className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
+                >
+                  Add Symptom
+                </Button>
               </div>
 
-              {/* Step 1: Symptoms */}
-              {step === 1 && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-white">Describe Your Symptoms</h2>
-
-                  <div className="space-y-4">
-                    <div>
-                      <label className="block text-sm font-medium text-cyan-200 mb-2">
-                        Symptom Name
-                      </label>
-                      <Input
-                        placeholder="e.g., Chest pain, Fever, Headache"
-                        value={currentSymptom.name}
-                        onChange={(e) =>
-                          setCurrentSymptom({ ...currentSymptom, name: e.target.value })
-                        }
-                        className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-cyan-200 mb-2">
-                        Duration
-                      </label>
-                      <Input
-                        placeholder="e.g., 2 days, 1 week"
-                        value={currentSymptom.duration}
-                        onChange={(e) =>
-                          setCurrentSymptom({ ...currentSymptom, duration: e.target.value })
-                        }
-                        className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500"
-                      />
-                    </div>
-
-                    <div>
-                      <label className="block text-sm font-medium text-cyan-200 mb-2">
-                        Severity (1-10): {currentSymptom.severity}
-                      </label>
-                      <input
-                        type="range"
-                        min="1"
-                        max="10"
-                        value={currentSymptom.severity}
-                        onChange={(e) =>
-                          setCurrentSymptom({
-                            ...currentSymptom,
-                            severity: parseInt(e.target.value),
-                          })
-                        }
-                        className="w-full accent-cyan-500"
-                      />
-                    </div>
-
-                    <Button
-                      onClick={handleAddSymptom}
-                      className="w-full bg-cyan-600 hover:bg-cyan-700 text-white"
-                    >
-                      Add Symptom
-                    </Button>
-                  </div>
-
-                  {/* Added Symptoms List */}
-                  {symptoms.length > 0 && (
-                    <div className="mt-6 p-4 bg-slate-800/50 rounded-lg border border-cyan-500/20">
-                      <h3 className="font-semibold text-cyan-200 mb-3">Added Symptoms:</h3>
-                      {symptoms.map((sym, idx) => (
-                        <div
-                          key={idx}
-                          className="flex justify-between items-center py-2 text-sm text-gray-300 border-b border-slate-700 last:border-b-0"
-                        >
-                          <span>
-                            {sym.name} ({sym.severity}/10) - {sym.duration}
-                          </span>
-                          <button
-                            onClick={() => setSymptoms(symptoms.filter((_, i) => i !== idx))}
-                            className="text-orange-400 hover:text-orange-300"
-                          >
-                            Remove
-                          </button>
+              {symptoms.length > 0 && (
+                <div className="bg-slate-800/50 p-4 rounded-lg mb-6">
+                  <h3 className="text-cyan-300 font-semibold mb-3">Added Symptoms:</h3>
+                  <div className="space-y-2">
+                    {symptoms.map((sym, idx) => (
+                      <div
+                        key={idx}
+                        className="flex items-center justify-between bg-slate-700/50 p-3 rounded"
+                      >
+                        <div className="flex-1">
+                          <p className="text-white font-semibold">{sym.name}</p>
+                          <p className="text-sm text-gray-400">
+                            Duration: {sym.duration} | Severity: {sym.severity}/10
+                          </p>
                         </div>
-                      ))}
-                    </div>
-                  )}
-
-                  <div className="flex gap-4 pt-6">
-                    <Button
-                      onClick={() => setStep(2)}
-                      disabled={symptoms.length === 0}
-                      className="flex-1 bg-cyan-600 hover:bg-cyan-700"
-                    >
-                      Next: Medical History
-                    </Button>
+                        <Button
+                          onClick={() =>
+                            setSymptoms(symptoms.filter((_, i) => i !== idx))
+                          }
+                          variant="destructive"
+                          size="sm"
+                        >
+                          Remove
+                        </Button>
+                      </div>
+                    ))}
                   </div>
                 </div>
               )}
 
-              {/* Step 2: Medical History */}
-              {step === 2 && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-white">Medical History</h2>
+              <Button
+                onClick={() => setStep(2)}
+                disabled={symptoms.length === 0}
+                className="w-full bg-gradient-to-r from-cyan-500 to-orange-500 hover:from-cyan-600 hover:to-orange-600 text-white"
+              >
+                Next: Medical History
+              </Button>
+            </Card>
+          )}
 
-                  {/* Allergies */}
-                  <div>
-                    <label className="block text-sm font-medium text-cyan-200 mb-2">
-                      Allergies
-                    </label>
-                    <div className="flex gap-2 mb-3">
-                      <Input
-                        placeholder="Add an allergy"
-                        value={newAllergy}
-                        onChange={(e) => setNewAllergy(e.target.value)}
-                        className="bg-slate-800 border-cyan-500/30 text-white"
-                      />
-                      <Button
-                        onClick={handleAddAllergy}
-                        className="bg-orange-600 hover:bg-orange-700"
+          {/* Step 2: Medical History */}
+          {step === 2 && (
+            <Card className="border-cyan-500/30 bg-slate-900/80 backdrop-blur p-6 mb-6">
+              <h2 className="text-2xl font-bold text-white mb-6">Step 2: Medical History</h2>
+
+              {/* Allergies */}
+              <div className="mb-6">
+                <label className="block text-cyan-300 font-semibold mb-2">
+                  Allergies
+                </label>
+                <div className="flex gap-2 mb-3">
+                  <Input
+                    placeholder="e.g., Penicillin, Peanuts"
+                    value={newAllergy}
+                    onChange={(e) => setNewAllergy(e.target.value)}
+                    className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500"
+                  />
+                  <Button
+                    onClick={handleAddAllergy}
+                    className="bg-cyan-500 hover:bg-cyan-600"
+                  >
+                    Add
+                  </Button>
+                </div>
+                {medicalHistory.allergies.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {medicalHistory.allergies.map((allergy, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-red-500/20 text-red-300 px-3 py-1 rounded-full text-sm flex items-center gap-2"
                       >
-                        Add
-                      </Button>
-                    </div>
-                    {medicalHistory.allergies.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {medicalHistory.allergies.map((allergy, idx) => (
-                          <span
-                            key={idx}
-                            className="bg-orange-500/20 text-orange-200 px-3 py-1 rounded-full text-sm flex items-center gap-2"
-                          >
-                            {allergy}
-                            <button
-                              onClick={() =>
-                                setMedicalHistory({
-                                  ...medicalHistory,
-                                  allergies: medicalHistory.allergies.filter(
-                                    (_, i) => i !== idx
-                                  ),
-                                })
-                              }
-                              className="hover:text-orange-100"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Chronic Conditions */}
-                  <div>
-                    <label className="block text-sm font-medium text-cyan-200 mb-2">
-                      Chronic Conditions
-                    </label>
-                    <div className="flex gap-2 mb-3">
-                      <Input
-                        placeholder="e.g., Diabetes, Hypertension"
-                        value={newCondition}
-                        onChange={(e) => setNewCondition(e.target.value)}
-                        className="bg-slate-800 border-cyan-500/30 text-white"
-                      />
-                      <Button
-                        onClick={handleAddCondition}
-                        className="bg-orange-600 hover:bg-orange-700"
-                      >
-                        Add
-                      </Button>
-                    </div>
-                    {medicalHistory.chronicConditions.length > 0 && (
-                      <div className="flex flex-wrap gap-2">
-                        {medicalHistory.chronicConditions.map((condition, idx) => (
-                          <span
-                            key={idx}
-                            className="bg-cyan-500/20 text-cyan-200 px-3 py-1 rounded-full text-sm flex items-center gap-2"
-                          >
-                            {condition}
-                            <button
-                              onClick={() =>
-                                setMedicalHistory({
-                                  ...medicalHistory,
-                                  chronicConditions: medicalHistory.chronicConditions.filter(
-                                    (_, i) => i !== idx
-                                  ),
-                                })
-                              }
-                              className="hover:text-cyan-100"
-                            >
-                              ×
-                            </button>
-                          </span>
-                        ))}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Current Medications */}
-                  <div>
-                    <label className="block text-sm font-medium text-cyan-200 mb-2">
-                      Current Medications
-                    </label>
-                    <div className="space-y-2 mb-3">
-                      <Input
-                        placeholder="Medication name"
-                        value={currentMedication.name}
-                        onChange={(e) =>
-                          setCurrentMedication({ ...currentMedication, name: e.target.value })
-                        }
-                        className="bg-slate-800 border-cyan-500/30 text-white"
-                      />
-                      <div className="flex gap-2">
-                        <Input
-                          placeholder="Dosage (e.g., 500mg)"
-                          value={currentMedication.dosage}
-                          onChange={(e) =>
-                            setCurrentMedication({
-                              ...currentMedication,
-                              dosage: e.target.value,
+                        {allergy}
+                        <button
+                          onClick={() =>
+                            setMedicalHistory({
+                              ...medicalHistory,
+                              allergies: medicalHistory.allergies.filter(
+                                (_, i) => i !== idx
+                              ),
                             })
                           }
-                          className="bg-slate-800 border-cyan-500/30 text-white flex-1"
-                        />
-                        <Input
-                          placeholder="Frequency (e.g., twice daily)"
-                          value={currentMedication.frequency}
-                          onChange={(e) =>
-                            setCurrentMedication({
-                              ...currentMedication,
-                              frequency: e.target.value,
+                          className="hover:text-red-200"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Chronic Conditions */}
+              <div className="mb-6">
+                <label className="block text-cyan-300 font-semibold mb-2">
+                  Chronic Conditions
+                </label>
+                <div className="flex gap-2 mb-3">
+                  <Input
+                    placeholder="e.g., Diabetes, Hypertension"
+                    value={newCondition}
+                    onChange={(e) => setNewCondition(e.target.value)}
+                    className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500"
+                  />
+                  <Button
+                    onClick={handleAddCondition}
+                    className="bg-cyan-500 hover:bg-cyan-600"
+                  >
+                    Add
+                  </Button>
+                </div>
+                {medicalHistory.chronicConditions.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {medicalHistory.chronicConditions.map((condition, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-yellow-500/20 text-yellow-300 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                      >
+                        {condition}
+                        <button
+                          onClick={() =>
+                            setMedicalHistory({
+                              ...medicalHistory,
+                              chronicConditions:
+                                medicalHistory.chronicConditions.filter(
+                                  (_, i) => i !== idx
+                                ),
                             })
                           }
-                          className="bg-slate-800 border-cyan-500/30 text-white flex-1"
-                        />
+                          className="hover:text-yellow-200"
+                        >
+                          ×
+                        </button>
                       </div>
-                      <Button
-                        onClick={handleAddMedication}
-                        className="w-full bg-orange-600 hover:bg-orange-700"
-                      >
-                        Add Medication
-                      </Button>
-                    </div>
-                    {medicalHistory.currentMedications.length > 0 && (
-                      <div className="space-y-2">
-                        {medicalHistory.currentMedications.map((med, idx) => (
-                          <div
-                            key={idx}
-                            className="bg-slate-800/50 p-3 rounded border border-cyan-500/20 flex justify-between items-start"
-                          >
-                            <div className="text-sm text-gray-300">
-                              <p className="font-medium text-cyan-200">{med.name}</p>
-                              <p className="text-xs text-gray-400">
-                                {med.dosage} - {med.frequency}
-                              </p>
-                            </div>
-                            <button
-                              onClick={() =>
-                                setMedicalHistory({
-                                  ...medicalHistory,
-                                  currentMedications: medicalHistory.currentMedications.filter(
-                                    (_, i) => i !== idx
-                                  ),
-                                })
-                              }
-                              className="text-orange-400 hover:text-orange-300"
-                            >
-                              Remove
-                            </button>
-                          </div>
-                        ))}
-                      </div>
-                    )}
+                    ))}
                   </div>
+                )}
+              </div>
 
-                  {/* Family History */}
-                  <div>
-                    <label className="block text-sm font-medium text-cyan-200 mb-2">
-                      Family History (Optional)
-                    </label>
-                    <Textarea
-                      placeholder="Any relevant family medical history..."
-                      value={medicalHistory.familyHistory}
+              {/* Current Medications */}
+              <div className="mb-6">
+                <label className="block text-cyan-300 font-semibold mb-2">
+                  Current Medications
+                </label>
+                <div className="space-y-2 mb-3">
+                  <Input
+                    placeholder="Medication name"
+                    value={currentMedication.name}
+                    onChange={(e) =>
+                      setCurrentMedication({
+                        ...currentMedication,
+                        name: e.target.value,
+                      })
+                    }
+                    className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500"
+                  />
+                  <div className="grid grid-cols-2 gap-2">
+                    <Input
+                      placeholder="Dosage (e.g., 500mg)"
+                      value={currentMedication.dosage}
                       onChange={(e) =>
-                        setMedicalHistory({
-                          ...medicalHistory,
-                          familyHistory: e.target.value,
+                        setCurrentMedication({
+                          ...currentMedication,
+                          dosage: e.target.value,
                         })
                       }
                       className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500"
-                      rows={3}
+                    />
+                    <Input
+                      placeholder="Frequency (e.g., 2x daily)"
+                      value={currentMedication.frequency}
+                      onChange={(e) =>
+                        setCurrentMedication({
+                          ...currentMedication,
+                          frequency: e.target.value,
+                        })
+                      }
+                      className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500"
                     />
                   </div>
-
-                  <div className="flex gap-4 pt-6">
-                    <Button
-                      onClick={() => setStep(1)}
-                      variant="outline"
-                      className="flex-1 border-cyan-500/30 text-cyan-200 hover:bg-slate-800"
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      onClick={() => setStep(3)}
-                      className="flex-1 bg-cyan-600 hover:bg-cyan-700"
-                    >
-                      Review & Submit
-                    </Button>
-                  </div>
+                  <Button
+                    onClick={handleAddMedication}
+                    className="w-full bg-cyan-500 hover:bg-cyan-600"
+                  >
+                    Add Medication
+                  </Button>
                 </div>
-              )}
-
-              {/* Step 3: Review */}
-              {step === 3 && (
-                <div className="space-y-6">
-                  <h2 className="text-2xl font-bold text-white">Review Your Information</h2>
-
-                  <div className="space-y-4 bg-slate-800/50 p-4 rounded-lg border border-cyan-500/20">
-                    <div>
-                      <h3 className="font-semibold text-cyan-200 mb-2">Symptoms ({symptoms.length})</h3>
-                      {symptoms.map((sym, idx) => (
-                        <p key={idx} className="text-sm text-gray-300">
-                          • {sym.name} - Severity {sym.severity}/10, Duration: {sym.duration}
-                        </p>
-                      ))}
-                    </div>
-
-                    {medicalHistory.allergies.length > 0 && (
-                      <div>
-                        <h3 className="font-semibold text-orange-300 mb-2">Allergies</h3>
-                        <p className="text-sm text-gray-300">
-                          {medicalHistory.allergies.join(", ")}
-                        </p>
-                      </div>
-                    )}
-
-                    {medicalHistory.chronicConditions.length > 0 && (
-                      <div>
-                        <h3 className="font-semibold text-cyan-300 mb-2">Chronic Conditions</h3>
-                        <p className="text-sm text-gray-300">
-                          {medicalHistory.chronicConditions.join(", ")}
-                        </p>
-                      </div>
-                    )}
-
-                    {medicalHistory.currentMedications.length > 0 && (
-                      <div>
-                        <h3 className="font-semibold text-cyan-300 mb-2">Current Medications</h3>
-                        {medicalHistory.currentMedications.map((med, idx) => (
-                          <p key={idx} className="text-sm text-gray-300">
-                            • {med.name} {med.dosage} - {med.frequency}
+                {medicalHistory.currentMedications.length > 0 && (
+                  <div className="space-y-2">
+                    {medicalHistory.currentMedications.map((med, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-slate-700/50 p-3 rounded flex items-center justify-between"
+                      >
+                        <div className="text-white">
+                          <p className="font-semibold">{med.name}</p>
+                          <p className="text-sm text-gray-400">
+                            {med.dosage} - {med.frequency}
                           </p>
-                        ))}
+                        </div>
+                        <Button
+                          onClick={() =>
+                            setMedicalHistory({
+                              ...medicalHistory,
+                              currentMedications:
+                                medicalHistory.currentMedications.filter(
+                                  (_, i) => i !== idx
+                                ),
+                            })
+                          }
+                          variant="destructive"
+                          size="sm"
+                        >
+                          Remove
+                        </Button>
                       </div>
-                    )}
+                    ))}
                   </div>
+                )}
+              </div>
 
-                  <div className="flex gap-4 pt-6">
-                    <Button
-                      onClick={() => setStep(2)}
-                      variant="outline"
-                      className="flex-1 border-cyan-500/30 text-cyan-200 hover:bg-slate-800"
-                    >
-                      Back
-                    </Button>
-                    <Button
-                      onClick={handleSubmit}
-                      disabled={analyzeMutation.isPending}
-                      className="flex-1 bg-gradient-to-r from-cyan-600 to-orange-600 hover:from-cyan-700 hover:to-orange-700"
-                    >
-                      {analyzeMutation.isPending ? (
-                        <>
-                          <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                          Analyzing...
-                        </>
-                      ) : (
-                        <>
-                          <CheckCircle2 className="w-4 h-4 mr-2" />
-                          Submit for Analysis
-                        </>
-                      )}
-                    </Button>
-                  </div>
-                </div>
-              )}
-            </div>
-          </Card>
+              {/* Family History */}
+              <div className="mb-6">
+                <label className="block text-cyan-300 font-semibold mb-2">
+                  Family History (Optional)
+                </label>
+                <Textarea
+                  placeholder="Any relevant family medical history..."
+                  value={medicalHistory.familyHistory}
+                  onChange={(e) =>
+                    setMedicalHistory({
+                      ...medicalHistory,
+                      familyHistory: e.target.value,
+                    })
+                  }
+                  className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500 min-h-24"
+                />
+              </div>
 
-          {/* Footer */}
-          <p className="text-center text-gray-400 text-sm mt-8">
-            Your information is encrypted and stored securely in compliance with healthcare privacy standards.
-          </p>
+              {/* Language Selection */}
+              <div className="mb-6">
+                <label className="block text-cyan-300 font-semibold mb-2">
+                  Preferred Language
+                </label>
+                <Select value={language} onValueChange={setLanguage}>
+                  <SelectTrigger className="bg-slate-800 border-cyan-500/30 text-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent className="bg-slate-800 border-cyan-500/30">
+                    <SelectItem value="en">English</SelectItem>
+                    <SelectItem value="es">Español</SelectItem>
+                    <SelectItem value="fr">Français</SelectItem>
+                    <SelectItem value="de">Deutsch</SelectItem>
+                    <SelectItem value="zh">中文</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="flex gap-4">
+                <Button
+                  onClick={() => setStep(1)}
+                  variant="outline"
+                  className="flex-1 border-cyan-500 text-cyan-300 hover:bg-cyan-500/10"
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={handleSubmit}
+                  disabled={analyzeMutation.isPending}
+                  className="flex-1 bg-gradient-to-r from-cyan-500 to-orange-500 hover:from-cyan-600 hover:to-orange-600 text-white"
+                >
+                  {analyzeMutation.isPending ? (
+                    <>
+                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      Analyzing...
+                    </>
+                  ) : (
+                    "Submit & Analyze"
+                  )}
+                </Button>
+              </div>
+            </Card>
+          )}
         </div>
       </div>
     </div>

@@ -53,36 +53,66 @@ export default function SymptomResults() {
     setInteractionId(idNum);
   }, [params?.id]);
 
-  // Fetch results using tRPC when ID is available and user is authenticated
-  const { data: interaction, isLoading, error: queryError } = trpc.patient.getInteractionById.useQuery(
+  // First, try to get data from sessionStorage (from the form submission)
+  useEffect(() => {
+    if (!interactionId) return;
+
+    const cachedData = sessionStorage.getItem(`analysis_${interactionId}`);
+    if (cachedData) {
+      try {
+        const data = JSON.parse(cachedData);
+        console.log("Using cached analysis data from sessionStorage");
+        setResult(data);
+        setLoading(false);
+        // Clear the cached data after using it
+        sessionStorage.removeItem(`analysis_${interactionId}`);
+        return;
+      } catch (err) {
+        console.warn("Failed to parse cached data:", err);
+      }
+    }
+
+    // If no cached data, we'll fetch from the database
+    setLoading(false);
+  }, [interactionId]);
+
+  // Fetch results from database using tRPC when ID is available and user is authenticated
+  // Only do this if we don't have cached data
+  const { data: interaction, isLoading: isQueryLoading, error: queryError } = trpc.patient.getInteractionById.useQuery(
     { interactionId: interactionId! },
     {
-      enabled: !!interactionId && isAuthenticated,
+      enabled: !!interactionId && isAuthenticated && !result,
       retry: 1,
     }
   );
 
-  // Process interaction data
+  // Process interaction data from database
   useEffect(() => {
-    if (isLoading) {
+    if (result) return; // Skip if we already have cached data
+    
+    if (isQueryLoading) {
       setLoading(true);
       return;
     }
 
     if (queryError) {
       console.error("Query error:", queryError);
-      setError("Failed to load your analysis results. Please try again.");
+      setError(`Failed to load your analysis results: ${queryError.message}`);
       setLoading(false);
       return;
     }
 
     if (!interaction) {
+      console.warn("No interaction data returned");
       setError("Unable to load analysis results. Please try again.");
       setLoading(false);
       return;
     }
 
+    console.log("Interaction data:", { id: interaction.id, hasAnalysis: !!interaction.aiAnalysis, analysisLength: interaction.aiAnalysis?.length });
+
     if (!interaction.aiAnalysis) {
+      console.warn("No aiAnalysis field in interaction");
       setError("The analysis data is not available yet. Please try again later.");
       setLoading(false);
       return;
@@ -101,14 +131,14 @@ export default function SymptomResults() {
       setError("Error processing your analysis results.");
       setLoading(false);
     }
-  }, [interaction, isLoading, queryError]);
+  }, [interaction, isQueryLoading, queryError, result]);
 
   // Check authentication
   useEffect(() => {
-    if (!isAuthenticated && !loading) {
+    if (!isAuthenticated && !loading && !result) {
       setError("Please log in to view your results.");
     }
-  }, [isAuthenticated, loading]);
+  }, [isAuthenticated, loading, result]);
 
   const getUrgencyColor = (level: string) => {
     switch (level) {
