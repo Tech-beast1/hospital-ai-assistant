@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Streamdown } from "streamdown";
+import { AnalysisLoading } from "./AnalysisLoading";
 
 export default function PatientIntake() {
   const [, setLocation] = useLocation();
@@ -27,6 +28,9 @@ export default function PatientIntake() {
   const [newAllergy, setNewAllergy] = useState("");
   const [newCondition, setNewCondition] = useState("");
   const [newSurgery, setNewSurgery] = useState("");
+  const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [elapsedSeconds, setElapsedSeconds] = useState(0);
+  const [abortController, setAbortController] = useState<AbortController | null>(null);
 
   const analyzeMutation = trpc.symptoms.analyzeSymptoms.useMutation();
   const updateHistoryMutation = trpc.patient.updateMedicalHistory.useMutation();
@@ -78,6 +82,26 @@ export default function PatientIntake() {
     }
   };
 
+  // Timer for elapsed seconds
+  useEffect(() => {
+    if (!isAnalyzing) return;
+
+    const interval = setInterval(() => {
+      setElapsedSeconds((prev) => prev + 1);
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isAnalyzing]);
+
+  const handleCancel = () => {
+    if (abortController) {
+      abortController.abort();
+    }
+    setIsAnalyzing(false);
+    setElapsedSeconds(0);
+    setAbortController(null);
+  };
+
   const handleSubmit = async () => {
     if (symptoms.length === 0) {
       alert("Please add at least one symptom");
@@ -85,6 +109,11 @@ export default function PatientIntake() {
     }
 
     try {
+      setIsAnalyzing(true);
+      setElapsedSeconds(0);
+      const controller = new AbortController();
+      setAbortController(controller);
+
       // Update medical history first
       await updateHistoryMutation.mutateAsync(medicalHistory);
 
@@ -106,13 +135,28 @@ export default function PatientIntake() {
         })
       );
 
+      setIsAnalyzing(false);
       // Navigate to results with the interaction ID
       setLocation(`/results/${result.interactionId}`);
     } catch (error) {
       console.error("Error submitting intake form:", error);
-      alert("Error processing your information. Please try again.");
+      setIsAnalyzing(false);
+      if (error instanceof Error && error.name !== "AbortError") {
+        alert("Error processing your information. Please try again.");
+      }
     }
   };
+
+  // Show loading screen during analysis
+  if (isAnalyzing) {
+    return (
+      <AnalysisLoading
+        isLoading={isAnalyzing}
+        onCancel={handleCancel}
+        elapsedSeconds={elapsedSeconds}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen relative overflow-hidden">

@@ -95,3 +95,10 @@
 - [x] Ensure proper data flow from form submission to results display
 - [x] Fix data loading issue by using sessionStorage for immediate results display
 - [x] Add fallback to database fetch for later result retrieval
+
+## UX Improvements - Analysis Loading Experience
+- [x] Add progress indicator showing "Analyzing your symptoms..."
+- [x] Display estimated time for analysis completion
+- [x] Implement streaming results display
+- [x] Add helpful tips and disclaimers during wait time
+- [x] Create cancel button for long-running analysis
