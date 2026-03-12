@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import { useLocation, useParams } from "wouter";
+import { useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2, Clock, Home, Download, Share2 } from "lucide-react";
-import { trpc } from "@/lib/trpc";
-import { useAuth } from "@/_core/hooks/useAuth";
+import { useLocation } from "wouter";
 
 interface AnalysisResult {
   interactionId: number;
@@ -26,17 +25,15 @@ interface AnalysisResult {
 export default function SymptomResults() {
   const [, navigate] = useLocation();
   const params = useParams();
-  const { isAuthenticated } = useAuth();
   const [result, setResult] = useState<AnalysisResult | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [interactionId, setInteractionId] = useState<number | null>(null);
 
-  // Extract interaction ID from route params
+  // Extract interaction ID from route params and load cached data
   useEffect(() => {
     let id: string | undefined = params?.id;
     
-    // Fallback to query params if route param not available
     if (!id) {
       const queryParams = new URLSearchParams(window.location.search);
       const queryId = queryParams.get("id");
@@ -51,94 +48,31 @@ export default function SymptomResults() {
 
     const idNum = typeof id === 'string' ? parseInt(id) : id;
     setInteractionId(idNum);
-  }, [params?.id]);
 
-  // First, try to get data from sessionStorage (from the form submission)
-  useEffect(() => {
-    if (!interactionId) return;
-
-    const cachedData = sessionStorage.getItem(`analysis_${interactionId}`);
+    // Try to get data from sessionStorage first (this should be instant)
+    const cachedData = sessionStorage.getItem(`analysis_${idNum}`);
     if (cachedData) {
       try {
         const data = JSON.parse(cachedData);
-        console.log("Using cached analysis data from sessionStorage");
+        console.log("✓ Using cached analysis data from sessionStorage");
         setResult(data);
         setLoading(false);
         // Clear the cached data after using it
-        sessionStorage.removeItem(`analysis_${interactionId}`);
+        sessionStorage.removeItem(`analysis_${idNum}`);
         return;
       } catch (err) {
         console.warn("Failed to parse cached data:", err);
+        setError("Error processing your analysis results.");
+        setLoading(false);
+        return;
       }
     }
 
-    // If no cached data, we'll fetch from the database
+    // If no cached data, show error - user should not reach this state
+    console.warn("No cached analysis data found in sessionStorage");
+    setError("Analysis results not found. Please complete the symptom assessment again.");
     setLoading(false);
-  }, [interactionId]);
-
-  // Fetch results from database using tRPC when ID is available and user is authenticated
-  // Only do this if we don't have cached data
-  const { data: interaction, isLoading: isQueryLoading, error: queryError } = trpc.patient.getInteractionById.useQuery(
-    { interactionId: interactionId! },
-    {
-      enabled: !!interactionId && isAuthenticated && !result,
-      retry: 1,
-    }
-  );
-
-  // Process interaction data from database
-  useEffect(() => {
-    if (result) return; // Skip if we already have cached data
-    
-    if (isQueryLoading) {
-      setLoading(true);
-      return;
-    }
-
-    if (queryError) {
-      console.error("Query error:", queryError);
-      setError(`Failed to load your analysis results: ${queryError.message}`);
-      setLoading(false);
-      return;
-    }
-
-    if (!interaction) {
-      console.warn("No interaction data returned");
-      setError("Unable to load analysis results. Please try again.");
-      setLoading(false);
-      return;
-    }
-
-    console.log("Interaction data:", { id: interaction.id, hasAnalysis: !!interaction.aiAnalysis, analysisLength: interaction.aiAnalysis?.length });
-
-    if (!interaction.aiAnalysis) {
-      console.warn("No aiAnalysis field in interaction");
-      setError("The analysis data is not available yet. Please try again later.");
-      setLoading(false);
-      return;
-    }
-
-    try {
-      const analysisData = JSON.parse(interaction.aiAnalysis);
-      setResult({
-        interactionId: interaction.id,
-        analysis: analysisData,
-        disclaimers: analysisData.disclaimers || [],
-      });
-      setLoading(false);
-    } catch (err) {
-      console.error("Error parsing analysis data:", err);
-      setError("Error processing your analysis results.");
-      setLoading(false);
-    }
-  }, [interaction, isQueryLoading, queryError, result]);
-
-  // Check authentication
-  useEffect(() => {
-    if (!isAuthenticated && !loading && !result) {
-      setError("Please log in to view your results.");
-    }
-  }, [isAuthenticated, loading, result]);
+  }, [params?.id]);
 
   const getUrgencyColor = (level: string) => {
     switch (level) {
