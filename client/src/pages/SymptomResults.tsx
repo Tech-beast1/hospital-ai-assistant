@@ -5,6 +5,7 @@ import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { AlertCircle, CheckCircle2, Clock, Home, Download, Share2 } from "lucide-react";
 import { useLocation } from "wouter";
+import { generatePDFReport } from "@/lib/reportGenerator";
 
 interface AnalysisResult {
   interactionId: number;
@@ -284,13 +285,15 @@ export default function SymptomResults() {
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           <Button
             onClick={() => {
-              alert("Download feature coming soon. Please save this page or take a screenshot to share with your healthcare provider.");
+              if (result) {
+                generatePDFReport(result);
+              }
             }}
             variant="outline"
             className="gap-2 border-cyan-500 text-cyan-300 hover:bg-cyan-500/10"
           >
             <Download className="h-4 w-4" />
-            Download Results
+            Download Report
           </Button>
           <Button
             onClick={() => {
