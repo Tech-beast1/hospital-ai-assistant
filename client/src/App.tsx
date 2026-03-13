@@ -9,6 +9,9 @@ import PatientIntake from "./pages/PatientIntake";
 import SymptomResults from "./pages/SymptomResults";
 import LearnMore from "./pages/LearnMore";
 import MedicalStaffDashboard from "./pages/MedicalStaffDashboard";
+import Privacy from "./pages/Privacy";
+import Terms from "./pages/Terms";
+import Contact from "./pages/Contact";
 
 function Router() {
   // make sure to consider if you need authentication for certain routes
@@ -20,6 +23,9 @@ function Router() {
       <Route path="/results" component={SymptomResults} />
       <Route path="/learn-more" component={LearnMore} />
       <Route path="/dashboard" component={MedicalStaffDashboard} />
+      <Route path="/privacy" component={Privacy} />
+      <Route path="/terms" component={Terms} />
+      <Route path="/contact" component={Contact} />
       <Route path="/404" component={NotFound} />
       {/* Final fallback route */}
       <Route component={NotFound} />

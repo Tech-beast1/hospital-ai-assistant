@@ -125,3 +125,9 @@
 - [x] Create approval/override system for recommendations
 - [ ] Build audit log viewer for compliance tracking
 - [x] Add role-based access control (admin/doctor/nurse)
+
+## Footer Pages
+- [x] Create Privacy Policy page
+- [x] Create Terms of Service page
+- [x] Create Contact page
+- [x] Update footer links to navigate to new pages
