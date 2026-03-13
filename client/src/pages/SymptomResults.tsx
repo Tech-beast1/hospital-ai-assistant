@@ -3,9 +3,12 @@ import { useParams } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { AlertCircle, CheckCircle2, Clock, Home, Download, Share2 } from "lucide-react";
+import { AlertCircle, CheckCircle2, Clock, Home, Download, Copy, Mail } from "lucide-react";
 import { useLocation } from "wouter";
 import { generatePDFReport } from "@/lib/reportGenerator";
+import { copyReportLinkToClipboard, shareViaEmail } from "@/lib/shareUtils";
+import { toast } from "sonner";
+import DeveloperFooter from "@/components/DeveloperFooter";
 
 interface AnalysisResult {
   interactionId: number;
@@ -296,14 +299,29 @@ export default function SymptomResults() {
             Download Report
           </Button>
           <Button
-            onClick={() => {
-              alert("Share feature coming soon. You can copy the URL to share with your healthcare provider.");
+            onClick={async () => {
+              const success = await copyReportLinkToClipboard(result.interactionId);
+              if (success) {
+                toast.success("Report link copied! You can now share it with your healthcare provider.");
+              } else {
+                toast.error("Failed to copy link. Please try again.");
+              }
             }}
             variant="outline"
             className="gap-2 border-cyan-500 text-cyan-300 hover:bg-cyan-500/10"
           >
-            <Share2 className="h-4 w-4" />
-            Share with Doctor
+            <Copy className="h-4 w-4" />
+            Copy Link
+          </Button>
+          <Button
+            onClick={() => {
+              shareViaEmail(result);
+            }}
+            variant="outline"
+            className="gap-2 border-orange-500 text-orange-300 hover:bg-orange-500/10"
+          >
+            <Mail className="h-4 w-4" />
+            Email Doctor
           </Button>
           <Button
             onClick={() => navigate("/intake")}
@@ -315,12 +333,20 @@ export default function SymptomResults() {
 
         {/* Footer Info */}
         <div className="mt-12 pt-8 border-t border-cyan-500/30 text-center">
-          <p className="text-gray-400 text-sm">
+          <p className="text-gray-400 text-sm mb-6">
             This analysis has been logged securely for your medical records and hospital staff review.
             Your healthcare provider can access this information to assist with your care.
           </p>
+          <Button
+            onClick={() => navigate("/learn-more")}
+            variant="ghost"
+            className="text-cyan-300 hover:text-cyan-200 hover:bg-cyan-500/10"
+          >
+            Learn More About This System
+          </Button>
         </div>
       </div>
+      <DeveloperFooter />
     </div>
   );
 }

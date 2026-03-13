@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
+import DeveloperFooter from "@/components/DeveloperFooter";
 
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
@@ -105,6 +106,7 @@ export default function Home() {
                   </a>
                 )}
                 <Button
+                  onClick={() => setLocation("/learn-more")}
                   size="lg"
                   variant="outline"
                   className="border-cyan-500/30 text-cyan-200 hover:bg-slate-800 text-lg px-8"
@@ -297,6 +299,7 @@ export default function Home() {
           </div>
         </footer>
       </div>
+      <DeveloperFooter />
     </div>
   );
 }
