@@ -35,6 +35,15 @@ export default function PatientIntake() {
   const analyzeMutation = trpc.symptoms.analyzeSymptoms.useMutation();
   const updateHistoryMutation = trpc.patient.updateMedicalHistory.useMutation();
 
+  // Pre-fill form with voice transcription if available
+  useEffect(() => {
+    const voiceTranscription = sessionStorage.getItem("voiceTranscription");
+    if (voiceTranscription) {
+      setSymptoms([{ name: voiceTranscription, duration: "today", severity: 5 }]);
+      sessionStorage.removeItem("voiceTranscription");
+    }
+  }, []);
+
   const handleAddSymptom = () => {
     if (currentSymptom.name.trim()) {
       setSymptoms([...symptoms, currentSymptom]);

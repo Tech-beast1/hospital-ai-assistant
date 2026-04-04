@@ -13,6 +13,7 @@ import {
 import { getLoginUrl } from "@/const";
 import { useLocation } from "wouter";
 import DeveloperFooter from "@/components/DeveloperFooter";
+import VoiceRecorder from "@/components/VoiceRecorder";
 
 export default function Home() {
   const { user, loading, isAuthenticated } = useAuth();
@@ -114,6 +115,18 @@ export default function Home() {
                   Learn More
                 </Button>
               </div>
+
+              {isAuthenticated && (
+                <div className="mt-8 pt-8 border-t border-cyan-500/20">
+                  <p className="text-sm text-gray-400 mb-4">Or record your symptoms instead:</p>
+                  <VoiceRecorder
+                    onTranscriptionComplete={(text) => {
+                      sessionStorage.setItem("voiceTranscription", text);
+                      setLocation("/intake");
+                    }}
+                  />
+                </div>
+              )}
 
               {/* Trust Badges */}
               <div className="flex gap-6 pt-4">

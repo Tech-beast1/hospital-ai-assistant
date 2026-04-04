@@ -131,3 +131,11 @@
 - [x] Create Terms of Service page
 - [x] Create Contact page
 - [x] Update footer links to navigate to new pages
+
+## Voice Recording & Transcription
+- [x] Implement audio recording interface with record/stop buttons
+- [x] Add audio playback for review before submission
+- [x] Integrate speech-to-text transcription API
+- [x] Auto-populate symptom form with transcribed text
+- [x] Add error handling for recording failures
+- [x] Display transcription status and progress

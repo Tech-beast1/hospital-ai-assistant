@@ -1,0 +1,42 @@
+transcribeAudio: protectedProcedure
+  .input(
+    z.object({
+      audio: z.string(),
+      mimeType: z.string().optional(),
+    })
+  )
+  .mutation(async ({ ctx, input }) => {
+    try {
+      const { transcribeAudio } = await import("./_core/voiceTranscription");
+
+      const result = await transcribeAudio({
+        audioUrl: input.audio,
+        language: "en",
+      });
+
+      await logAuditEvent({
+        userId: ctx.user.id,
+        action: "TRANSCRIBE_AUDIO",
+        resourceType: "audio_transcription",
+        details: JSON.stringify({
+          textLength: result.text?.length || 0,
+          language: result.language,
+        }),
+        ipAddress: ctx.req.headers["x-forwarded-for"] || "unknown",
+        userAgent: ctx.req.headers["user-agent"],
+        complianceEvent: false,
+      });
+
+      return {
+        success: true,
+        text: result.text || "",
+        language: result.language,
+      };
+    } catch (error) {
+      console.error("Transcription error:", error);
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to transcribe audio",
+      });
+    }
+  }),
