@@ -139,3 +139,11 @@
 - [x] Auto-populate symptom form with transcribed text
 - [x] Add error handling for recording failures
 - [x] Display transcription status and progress
+
+## Bug Fixes - Voice Recording
+- [x] Fix "Failed to transcribe" error in VoiceRecorder
+- [x] Improve audio encoding for transcription API compatibility
+- [x] Add better error messages for transcription failures
+- [x] Handle audio file size limits gracefully
+- [x] Integrate tRPC client for transcription API calls
+- [x] Fix TypeScript type errors in transcribeAudio procedure

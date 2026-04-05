@@ -130,6 +130,75 @@ export const appRouter = router({
 
         return interaction;
       }),
+
+    transcribeAudio: protectedProcedure
+      .input(
+        z.object({
+          audio: z.string(),
+          mimeType: z.string().optional(),
+        })
+      )
+      .mutation(async ({ ctx, input }) => {
+        try {
+          const { transcribeAudio: transcribeAudioFn } = await import("./_core/voiceTranscription");
+
+          // Step 1: Handle base64 data URL or direct URL
+          let audioUrl = input.audio;
+          
+          if (input.audio.startsWith("data:")) {
+            // It's a base64 data URL, need to upload to S3 first
+            const base64Data = input.audio.split(",")[1];
+            if (!base64Data) {
+              throw new Error("Invalid base64 data URL");
+            }
+            
+            const audioBuffer = Buffer.from(base64Data, "base64");
+            const fileKey = `patients/${ctx.user.id}/audio/${nanoid()}.webm`;
+            
+            const { url } = await storagePut(fileKey, audioBuffer, "audio/webm");
+            audioUrl = url;
+          }
+
+          // Step 2: Transcribe using the audio URL (either original or uploaded to S3)
+          const result = await transcribeAudioFn({
+            audioUrl,
+            language: "en",
+          });
+
+          // Check if result is an error
+          if ("error" in result) {
+            throw new Error(result.error);
+          }
+
+          const transcribedText = (result as any).text || "";
+          const detectedLanguage = (result as any).language || "en";
+
+          await logAuditEvent({
+            userId: ctx.user.id,
+            action: "TRANSCRIBE_AUDIO",
+            resourceType: "audio_transcription",
+            details: JSON.stringify({
+              textLength: transcribedText.length || 0,
+              language: detectedLanguage,
+            }),
+            ipAddress: ctx.req.headers["x-forwarded-for"] || "unknown",
+            userAgent: ctx.req.headers["user-agent"],
+            complianceEvent: false,
+          });
+
+          return {
+            success: true,
+            text: transcribedText,
+            language: detectedLanguage,
+          };
+        } catch (error) {
+          console.error("Transcription error:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: error instanceof Error ? error.message : "Failed to transcribe audio",
+          });
+        }
+      }),
   }),
 
   // Symptom analysis and AI-powered diagnosis support

@@ -20,6 +20,27 @@ export default function VoiceRecorder({ onTranscriptionComplete, isLoading }: Vo
   const timerRef = useRef<NodeJS.Timeout | null>(null);
   const audioRef = useRef<HTMLAudioElement | null>(null);
 
+  // Get tRPC mutation for transcription
+  const transcribeMutation = trpc.patient.transcribeAudio.useMutation({
+    onSuccess: (data) => {
+      if (data.text) {
+        onTranscriptionComplete(data.text);
+        toast.success("Audio transcribed successfully!");
+        setAudioBlob(null);
+        setRecordingTime(0);
+      } else {
+        toast.error("Could not transcribe audio. Please try again.");
+      }
+    },
+    onError: (error) => {
+      console.error("Transcription error:", error);
+      toast.error("Transcription failed. Please try again.");
+    },
+    onSettled: () => {
+      setIsTranscribing(false);
+    },
+  });
+
   const startRecording = async () => {
     try {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
@@ -77,43 +98,20 @@ export default function VoiceRecorder({ onTranscriptionComplete, isLoading }: Vo
 
     setIsTranscribing(true);
     try {
-      // Convert blob to base64 for API transmission
+      // Step 1: Convert blob to base64 for transmission
       const reader = new FileReader();
       reader.onload = async () => {
-        const base64Audio = reader.result as string;
-        
         try {
-          // Call the transcription API
-          const response = await fetch("/api/trpc/patient.transcribeAudio", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: JSON.stringify({
-              audio: base64Audio,
-              mimeType: "audio/webm",
-            }),
+          const base64Audio = reader.result as string;
+          
+          // Step 2: Call the tRPC mutation with the base64 audio data
+          // The backend will handle uploading to S3 and transcribing
+          await transcribeMutation.mutateAsync({
+            audio: base64Audio,
+            mimeType: "audio/webm",
           });
-
-          if (!response.ok) {
-            throw new Error("Transcription failed");
-          }
-
-          const data = await response.json();
-          const transcribedText = data.result?.text || "";
-
-          if (transcribedText) {
-            onTranscriptionComplete(transcribedText);
-            toast.success("Audio transcribed successfully!");
-            setAudioBlob(null);
-            setRecordingTime(0);
-          } else {
-            toast.error("Could not transcribe audio. Please try again.");
-          }
         } catch (error) {
-          console.error("Transcription error:", error);
-          toast.error("Transcription failed. Please try again.");
-        } finally {
+          console.error("Transcription mutation error:", error);
           setIsTranscribing(false);
         }
       };
