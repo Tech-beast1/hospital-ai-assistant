@@ -1,5 +1,11 @@
-import { eq, and } from "drizzle-orm";
 import { drizzle } from "drizzle-orm/mysql2";
+import {
+  eq,
+  desc,
+  and,
+  count,
+  sql,
+} from "drizzle-orm";
 import {
   InsertUser,
   users,
@@ -418,4 +424,82 @@ export async function getPatientDocuments(userId: number) {
     .select()
     .from(patientDocuments)
     .where(eq(patientDocuments.userId, userId));
+}
+
+
+// New functions for dashboard patient history and search
+export async function getAllPatientInteractions(
+  limit = 100,
+  offset = 0
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .select()
+    .from(patientInteractions)
+    .orderBy(desc(patientInteractions.createdAt))
+    .limit(limit)
+    .offset(offset);
+}
+
+export async function getPatientInteractionsByUrgency(
+  urgencyLevel: string,
+  limit = 100
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .select()
+    .from(patientInteractions)
+    .where(eq(patientInteractions.urgencyLevel, urgencyLevel as "routine" | "moderate" | "urgent" | "critical"))
+    .orderBy(desc(patientInteractions.createdAt))
+    .limit(limit);
+}
+
+export async function getPatientInteractionsByStatus(
+  status: string,
+  limit = 100
+) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  return await db
+    .select()
+    .from(patientInteractions)
+    .where(eq(patientInteractions.status, status as "pending" | "reviewed" | "resolved" | "escalated"))
+    .orderBy(desc(patientInteractions.createdAt))
+    .limit(limit);
+}
+
+export async function getPatientWithHistory(userId: number) {
+  const db = await getDb();
+  if (!db) throw new Error("Database not available");
+
+  // Get user info
+  const userResult = await db
+    .select()
+    .from(users)
+    .where(eq(users.id, userId))
+    .limit(1);
+
+  if (!userResult.length) return null;
+
+  // Get medical history
+  const medicalHistory = await getOrCreatePatientMedicalHistory(userId);
+
+  // Get recent interactions
+  const interactions = await db
+    .select()
+    .from(patientInteractions)
+    .where(eq(patientInteractions.userId, userId))
+    .orderBy(desc(patientInteractions.createdAt))
+    .limit(10);
+
+  return {
+    user: userResult[0],
+    medicalHistory,
+    recentInteractions: interactions,
+  };
 }

@@ -147,3 +147,16 @@
 - [x] Handle audio file size limits gracefully
 - [x] Integrate tRPC client for transcription API calls
 - [x] Fix TypeScript type errors in transcribeAudio procedure
+
+
+## Dashboard Enhancements - Patient History & Records
+- [ ] Create backend API to fetch all patient interactions with pagination
+- [ ] Implement patient search by name, ID, or email
+- [ ] Add advanced filtering by date range, urgency level, and status
+- [ ] Build patient profile card component with key information
+- [ ] Display patient medical history in profile cards
+- [ ] Show recent assessments in patient cards
+- [ ] Implement patient records list view in dashboard
+- [ ] Add persistent session storage for patient records
+- [ ] Create patient detail modal/view for full interaction history
+- [ ] Add sorting options (by date, urgency, name)

@@ -25,6 +25,10 @@ import {
   createPatientDocument,
   getPatientDocuments,
   getUserById,
+  getAllPatientInteractions,
+  getPatientInteractionsByUrgency,
+  getPatientInteractionsByStatus,
+  getPatientWithHistory,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -560,6 +564,97 @@ IMPORTANT: This is for clinical decision support only. Always emphasize that a l
 
       return logs;
     }),
+
+    getAllPatientRecords: adminProcedure
+      .input(
+        z.object({
+          limit: z.number().default(100),
+          offset: z.number().default(0),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        const interactions = await getAllPatientInteractions(input.limit, input.offset);
+
+        await logAuditEvent({
+          userId: ctx.user.id,
+          action: "VIEW_ALL_PATIENT_RECORDS",
+          resourceType: "patient_interaction",
+          details: JSON.stringify({ count: interactions.length, limit: input.limit, offset: input.offset }),
+          ipAddress: ctx.req.headers["x-forwarded-for"] || "unknown",
+          userAgent: ctx.req.headers["user-agent"],
+          complianceEvent: true,
+        });
+
+        return interactions;
+      }),
+
+    getPatientRecordsByUrgency: adminProcedure
+      .input(
+        z.object({
+          urgencyLevel: z.enum(["routine", "moderate", "urgent", "critical"]),
+          limit: z.number().default(100),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        const interactions = await getPatientInteractionsByUrgency(input.urgencyLevel, input.limit);
+
+        await logAuditEvent({
+          userId: ctx.user.id,
+          action: "VIEW_PATIENT_RECORDS_BY_URGENCY",
+          resourceType: "patient_interaction",
+          details: JSON.stringify({ urgencyLevel: input.urgencyLevel, count: interactions.length }),
+          ipAddress: ctx.req.headers["x-forwarded-for"] || "unknown",
+          userAgent: ctx.req.headers["user-agent"],
+          complianceEvent: true,
+        });
+
+        return interactions;
+      }),
+
+    getPatientRecordsByStatus: adminProcedure
+      .input(
+        z.object({
+          status: z.enum(["pending", "reviewed", "resolved", "escalated"]),
+          limit: z.number().default(100),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        const interactions = await getPatientInteractionsByStatus(input.status, input.limit);
+
+        await logAuditEvent({
+          userId: ctx.user.id,
+          action: "VIEW_PATIENT_RECORDS_BY_STATUS",
+          resourceType: "patient_interaction",
+          details: JSON.stringify({ status: input.status, count: interactions.length }),
+          ipAddress: ctx.req.headers["x-forwarded-for"] || "unknown",
+          userAgent: ctx.req.headers["user-agent"],
+          complianceEvent: true,
+        });
+
+        return interactions;
+      }),
+
+    getPatientWithHistory: adminProcedure
+      .input(z.object({ userId: z.number() }))
+      .query(async ({ ctx, input }) => {
+        const patientData = await getPatientWithHistory(input.userId);
+
+        if (!patientData) {
+          throw new TRPCError({ code: "NOT_FOUND" });
+        }
+
+        await logAuditEvent({
+          userId: ctx.user.id,
+          action: "VIEW_PATIENT_HISTORY",
+          resourceType: "patient_profile",
+          resourceId: input.userId,
+          ipAddress: ctx.req.headers["x-forwarded-for"] || "unknown",
+          userAgent: ctx.req.headers["user-agent"],
+          complianceEvent: true,
+        });
+
+        return patientData;
+      }),
   }),
 
   // Document management
