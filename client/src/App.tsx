@@ -9,6 +9,7 @@ import PatientIntake from "./pages/PatientIntake";
 import SymptomResults from "./pages/SymptomResults";
 import LearnMore from "./pages/LearnMore";
 import MedicalStaffDashboard from "./pages/MedicalStaffDashboard";
+import UserDashboard from "./pages/UserDashboard";
 import Privacy from "./pages/Privacy";
 import Terms from "./pages/Terms";
 import Contact from "./pages/Contact";
@@ -22,7 +23,9 @@ function Router() {
       <Route path="/results/:id" component={SymptomResults} />
       <Route path="/results" component={SymptomResults} />
       <Route path="/learn-more" component={LearnMore} />
+      {/* Role-based dashboards */}
       <Route path="/dashboard" component={MedicalStaffDashboard} />
+      <Route path="/my-dashboard" component={UserDashboard} />
       <Route path="/privacy" component={Privacy} />
       <Route path="/terms" component={Terms} />
       <Route path="/contact" component={Contact} />

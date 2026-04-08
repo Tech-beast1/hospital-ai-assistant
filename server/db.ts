@@ -503,3 +503,85 @@ export async function getPatientWithHistory(userId: number) {
     recentInteractions: interactions,
   };
 }
+
+
+// Get user's own patient interactions (for regular users)
+export async function getUserPatientInteractions(userId: number, limit = 50, offset = 0) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get user interactions: database not available");
+    return [];
+  }
+
+  const interactions = await db
+    .select()
+    .from(patientInteractions)
+    .where(eq(patientInteractions.userId, userId))
+    .orderBy(desc(patientInteractions.createdAt))
+    .limit(limit)
+    .offset(offset);
+
+  return interactions;
+}
+
+// Get count of user's interactions
+export async function getUserInteractionCount(userId: number) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get interaction count: database not available");
+    return 0;
+  }
+
+  const result = await db
+    .select({ count: count() })
+    .from(patientInteractions)
+    .where(eq(patientInteractions.userId, userId));
+
+  return result[0]?.count || 0;
+}
+
+// Get user's interactions by status
+export async function getUserInteractionsByStatus(userId: number, status: "pending" | "reviewed" | "resolved" | "escalated", limit = 50) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get interactions by status: database not available");
+    return [];
+  }
+
+  const interactions = await db
+    .select()
+    .from(patientInteractions)
+    .where(
+      and(
+        eq(patientInteractions.userId, userId),
+        eq(patientInteractions.status, status)
+      )
+    )
+    .orderBy(desc(patientInteractions.createdAt))
+    .limit(limit);
+
+  return interactions;
+}
+
+// Get user's interactions by urgency level
+export async function getUserInteractionsByUrgency(userId: number, urgencyLevel: "routine" | "moderate" | "urgent" | "critical", limit = 50) {
+  const db = await getDb();
+  if (!db) {
+    console.warn("[Database] Cannot get interactions by urgency: database not available");
+    return [];
+  }
+
+  const interactions = await db
+    .select()
+    .from(patientInteractions)
+    .where(
+      and(
+        eq(patientInteractions.userId, userId),
+        eq(patientInteractions.urgencyLevel, urgencyLevel)
+      )
+    )
+    .orderBy(desc(patientInteractions.createdAt))
+    .limit(limit);
+
+  return interactions;
+}

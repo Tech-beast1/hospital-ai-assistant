@@ -29,6 +29,10 @@ import {
   getPatientInteractionsByUrgency,
   getPatientInteractionsByStatus,
   getPatientWithHistory,
+  getUserPatientInteractions,
+  getUserInteractionCount,
+  getUserInteractionsByStatus,
+  getUserInteractionsByUrgency,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -202,6 +206,80 @@ export const appRouter = router({
             message: error instanceof Error ? error.message : "Failed to transcribe audio",
           });
         }
+      }),
+
+    // User personal dashboard - get own interactions
+    getUserDashboard: protectedProcedure
+      .input(
+        z.object({
+          limit: z.number().default(50),
+          offset: z.number().default(0),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        const interactions = await getUserPatientInteractions(ctx.user.id, input.limit, input.offset);
+        const totalCount = await getUserInteractionCount(ctx.user.id);
+
+        await logAuditEvent({
+          userId: ctx.user.id,
+          action: "VIEW_USER_DASHBOARD",
+          resourceType: "patient_interaction",
+          details: JSON.stringify({ count: interactions.length, limit: input.limit, offset: input.offset }),
+          ipAddress: ctx.req.headers["x-forwarded-for"] || "unknown",
+          userAgent: ctx.req.headers["user-agent"],
+        });
+
+        return {
+          interactions,
+          totalCount,
+          hasMore: input.offset + input.limit < totalCount,
+        };
+      }),
+
+    // Get user's interactions by status
+    getUserInteractionsByStatus: protectedProcedure
+      .input(
+        z.object({
+          status: z.enum(["pending", "reviewed", "resolved", "escalated"]),
+          limit: z.number().default(50),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        const interactions = await getUserInteractionsByStatus(ctx.user.id, input.status, input.limit);
+
+        await logAuditEvent({
+          userId: ctx.user.id,
+          action: "VIEW_USER_INTERACTIONS_BY_STATUS",
+          resourceType: "patient_interaction",
+          details: JSON.stringify({ status: input.status, count: interactions.length }),
+          ipAddress: ctx.req.headers["x-forwarded-for"] || "unknown",
+          userAgent: ctx.req.headers["user-agent"],
+        });
+
+        return interactions;
+      }),
+
+    // Get user's interactions by urgency
+    getUserInteractionsByUrgency: protectedProcedure
+      .input(
+        z.object({
+          urgencyLevel: z.enum(["routine", "moderate", "urgent", "critical"]),
+          limit: z.number().default(50),
+        })
+      )
+      .query(async ({ ctx, input }) => {
+        const interactions = await getUserInteractionsByUrgency(ctx.user.id, input.urgencyLevel, input.limit);
+
+        await logAuditEvent({
+          userId: ctx.user.id,
+          action: "VIEW_USER_INTERACTIONS_BY_URGENCY",
+          resourceType: "patient_interaction",
+          details: JSON.stringify({ urgencyLevel: input.urgencyLevel, count: interactions.length }),
+          ipAddress: ctx.req.headers["x-forwarded-for"] || "unknown",
+          userAgent: ctx.req.headers["user-agent"],
+        });
+
+        return interactions;
       }),
   }),
 

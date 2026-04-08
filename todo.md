@@ -160,3 +160,14 @@
 - [ ] Add persistent session storage for patient records
 - [ ] Create patient detail modal/view for full interaction history
 - [ ] Add sorting options (by date, urgency, name)
+
+
+## Role-Based Dashboards - User-Specific Data Access
+- [x] Create backend API to fetch user's own patient interactions
+- [x] Create backend API to fetch user's own symptom reports
+- [x] Create user personal dashboard component
+- [x] Update App.tsx routing to show role-based dashboard
+- [x] Implement access control to prevent users from viewing other users' data
+- [x] Add tests for user-specific data access
+- [x] Verify medical staff can still see all patient records
+- [x] Verify regular users can only see their own data
