@@ -171,3 +171,12 @@
 - [x] Add tests for user-specific data access
 - [x] Verify medical staff can still see all patient records
 - [x] Verify regular users can only see their own data
+
+
+## Dashboard Access Fix
+- [x] Remove strict role-based access denial
+- [x] Allow both regular users and medical staff to access dashboards
+- [x] Fix "Access Denied" error on /my-dashboard
+- [x] Fix "Access Denied" error on /dashboard
+- [x] Verify both dashboards work for any logged-in user
+- [x] Test with multiple user roles

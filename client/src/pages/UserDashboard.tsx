@@ -82,14 +82,14 @@ export default function UserDashboard() {
   const reviewedCount = (dashboardData?.interactions || []).filter((i) => i.status === "reviewed").length;
   const resolvedCount = (dashboardData?.interactions || []).filter((i) => i.status === "resolved").length;
 
-  if (!user || user.role === "admin") {
+  if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-teal-900 to-orange-900 flex items-center justify-center">
         <Card className="border-red-500/30 bg-slate-900/50 backdrop-blur p-8 max-w-md">
           <AlertCircle className="h-12 w-12 text-red-400 mx-auto mb-4" />
-          <h2 className="text-2xl font-bold text-white mb-4 text-center">Access Denied</h2>
+          <h2 className="text-2xl font-bold text-white mb-4 text-center">Not Logged In</h2>
           <p className="text-gray-300 mb-6 text-center">
-            This page is for patients. Medical staff should use the clinical dashboard instead.
+            Please log in to access your dashboard.
           </p>
           <Button onClick={() => navigate("/")} className="w-full gap-2">
             <Home className="h-4 w-4" />
