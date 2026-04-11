@@ -16,6 +16,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DeveloperFooter from "@/components/DeveloperFooter";
 import PatientProfileCard from "@/components/PatientProfileCard";
+import AssessmentDetailModal from "@/components/AssessmentDetailModal";
 
 interface UserInteraction {
   id: number;
@@ -36,6 +37,8 @@ export default function UserDashboard() {
   const [filterUrgency, setFilterUrgency] = useState<string>("all");
   const [interactions, setInteractions] = useState<UserInteraction[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedAssessment, setSelectedAssessment] = useState<UserInteraction | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch user's dashboard data
   const { data: dashboardData, isLoading: isLoadingDashboard } = trpc.patient.getUserDashboard.useQuery({
@@ -245,7 +248,11 @@ export default function UserDashboard() {
                     key={interaction.id}
                     interaction={interaction}
                     onViewDetails={(id) => {
-                      navigate(`/assessment/${id}`);
+                      const selected = interactions.find((i) => i.id === id);
+                      if (selected) {
+                        setSelectedAssessment(selected);
+                        setIsModalOpen(true);
+                      }
                     }}
                   />
                 ))}
@@ -254,6 +261,18 @@ export default function UserDashboard() {
           )}
         </div>
       </div>
+
+      {/* Assessment Detail Modal */}
+      {selectedAssessment && (
+        <AssessmentDetailModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedAssessment(null);
+          }}
+          assessment={selectedAssessment}
+        />
+      )}
 
       <DeveloperFooter />
     </div>

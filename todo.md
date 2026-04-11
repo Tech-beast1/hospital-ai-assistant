@@ -180,3 +180,15 @@
 - [x] Fix "Access Denied" error on /dashboard
 - [x] Verify both dashboards work for any logged-in user
 - [x] Test with multiple user roles
+
+
+## View Details Modal Implementation
+- [x] Create AssessmentDetailModal component
+- [x] Display assessment date, status, urgency level
+- [x] Show symptoms with severity levels
+- [x] Display AI analysis with markdown rendering
+- [x] Show medical staff review notes
+- [x] Add close button to dismiss modal
+- [x] Integrate modal into UserDashboard
+- [x] Integrate modal into MedicalStaffDashboard
+- [x] Test View Details button functionality

@@ -20,6 +20,7 @@ import { trpc } from "@/lib/trpc";
 import { useAuth } from "@/_core/hooks/useAuth";
 import DeveloperFooter from "@/components/DeveloperFooter";
 import PatientProfileCard from "@/components/PatientProfileCard";
+import AssessmentDetailModal from "@/components/AssessmentDetailModal";
 
 interface PatientInteractionData {
   id: number;
@@ -41,6 +42,8 @@ export default function MedicalStaffDashboard() {
   const [filterStatus, setFilterStatus] = useState<string>("all");
   const [interactions, setInteractions] = useState<PatientInteractionData[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [selectedAssessment, setSelectedAssessment] = useState<PatientInteractionData | null>(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   // Fetch all patient records
   const { data: allRecords, isLoading: isLoadingAll } = trpc.clinical.getAllPatientRecords.useQuery({
@@ -114,8 +117,11 @@ export default function MedicalStaffDashboard() {
   const flaggedCount = (allRecords || []).filter((i) => i.flaggedForReview).length;
 
   const handleViewDetails = (id: number) => {
-    // Navigate to interaction detail page if available
-    console.log("View details for interaction:", id);
+    const selected = interactions.find((i) => i.id === id);
+    if (selected) {
+      setSelectedAssessment(selected);
+      setIsModalOpen(true);
+    }
   };
 
   const handleReview = (id: number) => {
@@ -301,6 +307,18 @@ export default function MedicalStaffDashboard() {
           )}
         </div>
       </div>
+
+      {/* Assessment Detail Modal */}
+      {selectedAssessment && (
+        <AssessmentDetailModal
+          isOpen={isModalOpen}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedAssessment(null);
+          }}
+          assessment={selectedAssessment}
+        />
+      )}
 
       <DeveloperFooter />
     </div>
