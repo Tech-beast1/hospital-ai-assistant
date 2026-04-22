@@ -585,3 +585,36 @@ export async function getUserInteractionsByUrgency(userId: number, urgencyLevel:
 
   return interactions;
 }
+
+
+/**
+ * Delete all patient interaction records from the database
+ * This is an admin-only operation for clearing all patient data
+ * @returns Success indicator
+ */
+export async function deleteAllPatientRecords(): Promise<boolean> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  try {
+    // Delete all patient interactions
+    await db.delete(patientInteractions);
+    
+    // Log this action for audit purposes
+    await db.insert(auditLogs).values({
+      userId: 0,
+      action: "DELETE_ALL_PATIENT_RECORDS",
+      resourceType: "patient_interactions",
+      details: "Admin deleted all patient records from the system",
+      status: "success",
+      complianceEvent: true,
+    });
+
+    return true;
+  } catch (error) {
+    console.error("Error deleting all patient records:", error);
+    throw new Error("Failed to delete patient records");
+  }
+}

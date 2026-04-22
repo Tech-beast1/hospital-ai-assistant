@@ -192,3 +192,12 @@
 - [x] Integrate modal into UserDashboard
 - [x] Integrate modal into MedicalStaffDashboard
 - [x] Test View Details button functionality
+
+
+## Delete All Patient Records Feature
+- [x] Create backend API to delete all patient records
+- [x] Add delete button to MedicalStaffDashboard
+- [x] Implement confirmation dialog
+- [x] Add success/error notifications
+- [x] Test delete functionality
+- [x] Verify data is completely removed

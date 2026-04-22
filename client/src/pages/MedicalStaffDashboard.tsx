@@ -14,6 +14,7 @@ import {
   Users,
   FileText,
   Loader,
+  Trash2,
 } from "lucide-react";
 import { useLocation } from "wouter";
 import { trpc } from "@/lib/trpc";
@@ -44,6 +45,8 @@ export default function MedicalStaffDashboard() {
   const [isLoading, setIsLoading] = useState(true);
   const [selectedAssessment, setSelectedAssessment] = useState<PatientInteractionData | null>(null);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
 
   // Fetch all patient records
   const { data: allRecords, isLoading: isLoadingAll } = trpc.clinical.getAllPatientRecords.useQuery({
@@ -129,6 +132,25 @@ export default function MedicalStaffDashboard() {
     console.log("Review interaction:", id);
   };
 
+  // Delete all records mutation
+  const deleteAllMutation = trpc.clinical.deleteAllRecords.useMutation({
+    onSuccess: () => {
+      setShowDeleteConfirm(false);
+      setIsDeleting(false);
+      setInteractions([]);
+      alert("All patient records have been deleted successfully");
+    },
+    onError: (error) => {
+      setIsDeleting(false);
+      alert(`Error deleting records: ${error.message}`);
+    },
+  });
+
+  const handleDeleteAll = async () => {
+    setIsDeleting(true);
+    await deleteAllMutation.mutateAsync();
+  };
+
   if (!user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-slate-900 via-teal-900 to-orange-900 flex items-center justify-center">
@@ -158,6 +180,14 @@ export default function MedicalStaffDashboard() {
               <p className="text-cyan-300 mt-1">Patient Interaction Management & Clinical Review</p>
             </div>
             <div className="flex items-center gap-4">
+              <Button
+                onClick={() => setShowDeleteConfirm(true)}
+                variant="destructive"
+                className="gap-2 bg-red-600 hover:bg-red-700"
+              >
+                <Trash2 className="h-4 w-4" />
+                Delete All Records
+              </Button>
               <Button
                 onClick={() => navigate("/")}
                 variant="ghost"
@@ -307,6 +337,47 @@ export default function MedicalStaffDashboard() {
           )}
         </div>
       </div>
+
+      {/* Delete Confirmation Dialog */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+          <Card className="border-red-500/50 bg-slate-900 p-8 max-w-md">
+            <div className="flex items-center gap-4 mb-6">
+              <Trash2 className="h-8 w-8 text-red-500" />
+              <h2 className="text-2xl font-bold text-white">Delete All Records?</h2>
+            </div>
+            <p className="text-gray-300 mb-6">
+              This action will permanently delete all patient records from the system. This cannot be undone.
+            </p>
+            <div className="flex gap-4">
+              <Button
+                onClick={() => setShowDeleteConfirm(false)}
+                variant="outline"
+                className="flex-1 border-gray-500 text-white hover:bg-gray-500/10"
+              >
+                Cancel
+              </Button>
+              <Button
+                onClick={handleDeleteAll}
+                disabled={isDeleting}
+                className="flex-1 bg-red-600 hover:bg-red-700 gap-2"
+              >
+                {isDeleting ? (
+                  <>
+                    <Loader className="h-4 w-4 animate-spin" />
+                    Deleting...
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-4 w-4" />
+                    Delete All
+                  </>
+                )}
+              </Button>
+            </div>
+          </Card>
+        </div>
+      )}
 
       {/* Assessment Detail Modal */}
       {selectedAssessment && (

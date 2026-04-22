@@ -33,6 +33,7 @@ import {
   getUserInteractionCount,
   getUserInteractionsByStatus,
   getUserInteractionsByUrgency,
+  deleteAllPatientRecords,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
@@ -732,6 +733,44 @@ IMPORTANT: This is for clinical decision support only. Always emphasize that a l
         });
 
         return patientData;
+      }),
+
+    deleteAllRecords: protectedProcedure
+      .mutation(async ({ ctx }) => {
+        // Only allow admin users to delete all records
+        if (ctx.user.role !== "admin") {
+          throw new TRPCError({
+            code: "FORBIDDEN",
+            message: "Only administrators can delete all patient records",
+          });
+        }
+
+        try {
+          // Delete all patient records
+          const success = await deleteAllPatientRecords();
+
+          // Log this action
+          await logAuditEvent({
+            userId: ctx.user.id,
+            action: "DELETE_ALL_PATIENT_RECORDS",
+            resourceType: "patient_interactions",
+            details: `Admin deleted all patient records`,
+            ipAddress: ctx.req.ip,
+            userAgent: ctx.req.headers["user-agent"],
+            complianceEvent: true,
+          });
+
+          return {
+            success,
+            message: "All patient records have been deleted successfully",
+          };
+        } catch (error) {
+          console.error("Error deleting all patient records:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to delete patient records",
+          });
+        }
       }),
   }),
 
