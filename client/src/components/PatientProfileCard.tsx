@@ -14,6 +14,7 @@ import {
 interface PatientInteraction {
   id: number;
   userId: number;
+  patientName?: string | null;
   symptoms?: Array<{ name: string; duration: string; severity: number }> | null;
   urgencyLevel: "routine" | "moderate" | "urgent" | "critical" | null;
   flaggedForReview: boolean | null;
@@ -81,6 +82,11 @@ export default function PatientProfileCard({
         {/* Header with urgency and status */}
         <div className="flex items-start justify-between">
           <div className="flex-1">
+            {interaction.patientName && (
+              <div className="mb-3">
+                <h3 className="text-lg font-bold text-cyan-300">{interaction.patientName}</h3>
+              </div>
+            )}
             <div className="flex items-center gap-2 mb-2">
               <User className="h-5 w-5 text-cyan-400" />
               <span className="text-sm text-gray-400">Patient ID:</span>

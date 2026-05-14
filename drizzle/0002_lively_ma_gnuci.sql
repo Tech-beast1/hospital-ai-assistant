@@ -1,0 +1,1 @@
+ALTER TABLE `patientInteractions` ADD `patientName` varchar(255);

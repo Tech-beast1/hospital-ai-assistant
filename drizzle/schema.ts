@@ -50,6 +50,7 @@ export type InsertPatientMedicalHistory = typeof patientMedicalHistory.$inferIns
 export const patientInteractions = mysqlTable("patientInteractions", {
   id: int("id").autoincrement().primaryKey(),
   userId: int("userId").notNull(),
+  patientName: varchar("patientName", { length: 255 }),
   interactionType: mysqlEnum("interactionType", ["symptom_report", "follow_up", "medication_query"]).notNull(),
   language: varchar("language", { length: 10 }).default("en"),
   symptoms: json("symptoms").$type<Array<{name: string; duration: string; severity: number}>>(),

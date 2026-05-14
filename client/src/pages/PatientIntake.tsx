@@ -133,6 +133,7 @@ export default function PatientIntake() {
         symptomDuration: "as described",
         medicalHistory,
         language,
+        patientName,
       });
 
       // Store the analysis data in sessionStorage so the results page can access it

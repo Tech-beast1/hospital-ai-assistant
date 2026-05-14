@@ -70,6 +70,7 @@ const symptomReportSchema = z.object({
   symptomDuration: z.string(),
   medicalHistory: medicalHistorySchema,
   language: z.string().default("en"),
+  patientName: z.string().optional(),
 });
 
 // Admin procedure for role-based access
@@ -296,6 +297,7 @@ export const appRouter = router({
         // Create initial interaction record
         const interaction = await createPatientInteraction({
           userId: ctx.user.id,
+          patientName: input.patientName,
           interactionType: "symptom_report",
           language: input.language,
           symptoms: input.symptoms,

@@ -218,3 +218,11 @@
 - [x] Make name field required
 - [x] Display name in assessment summary
 - [x] Store patient name with assessment data
+
+
+## Patient Names in Assessments
+- [x] Add patientName column to patientInteractions table
+- [x] Update assessment form to save patient name with assessment
+- [x] Update dashboard to display patient names with assessments
+- [x] Match patient names with their assessments
+- [x] Test patient name storage and retrieval

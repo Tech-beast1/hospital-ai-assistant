@@ -15,6 +15,13 @@
       "when": 1778768340871,
       "tag": "0001_worthless_layla_miller",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "5",
+      "when": 1778769245184,
+      "tag": "0002_lively_ma_gnuci",
+      "breakpoints": true
     }
   ]
 }
