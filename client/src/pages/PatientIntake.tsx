@@ -14,6 +14,7 @@ import { AnalysisLoading } from "./AnalysisLoading";
 export default function PatientIntake() {
   const [, setLocation] = useLocation();
   const [step, setStep] = useState(1);
+  const [patientName, setPatientName] = useState("");
   const [language, setLanguage] = useState("en");
   const [symptoms, setSymptoms] = useState<Array<{ name: string; duration: string; severity: number }>>([]);
   const [currentSymptom, setCurrentSymptom] = useState({ name: "", duration: "", severity: 5 });
@@ -202,6 +203,30 @@ export default function PatientIntake() {
             </div>
           </Card>
 
+          {/* Step 0: Patient Name */}
+          {step === 1 && (
+            <Card className="border-teal-500/30 bg-slate-900/80 backdrop-blur p-6 mb-6">
+              <h2 className="text-2xl font-bold text-white mb-6">Patient Information</h2>
+              <div className="space-y-4 mb-6">
+                <div>
+                  <label className="block text-teal-300 font-semibold mb-2">
+                    Full Name *
+                  </label>
+                  <Input
+                    placeholder="Enter your full name"
+                    value={patientName}
+                    onChange={(e) => setPatientName(e.target.value)}
+                    className="bg-slate-800/50 border-teal-500/30 text-white placeholder-gray-500"
+                    required
+                  />
+                </div>
+              </div>
+              <div className="border-t border-teal-500/20 pt-6">
+                <h3 className="text-lg font-semibold text-white mb-4">Your Symptoms</h3>
+              </div>
+            </Card>
+          )}
+
           {/* Step 1: Symptoms */}
           {step === 1 && (
             <Card className="border-cyan-500/30 bg-slate-900/80 backdrop-blur p-6 mb-6">
@@ -298,7 +323,7 @@ export default function PatientIntake() {
 
               <Button
                 onClick={() => setStep(2)}
-                disabled={symptoms.length === 0}
+                disabled={symptoms.length === 0 || !patientName.trim()}
                 className="w-full bg-gradient-to-r from-cyan-500 to-orange-500 hover:from-cyan-600 hover:to-orange-600 text-white"
               >
                 Next: Medical History

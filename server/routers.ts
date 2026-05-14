@@ -34,9 +34,13 @@ import {
   getUserInteractionsByStatus,
   getUserInteractionsByUrgency,
   deleteAllPatientRecords,
+  createContactMessage,
+  getAllContactMessages,
+  markContactMessageAsRead,
 } from "./db";
 import { storagePut } from "./storage";
 import { nanoid } from "nanoid";
+import { sendContactFormEmail } from "./_core/emailService";
 
 // Validation schemas
 const symptomSchema = z.object({
@@ -840,6 +844,44 @@ IMPORTANT: This is for clinical decision support only. Always emphasize that a l
 
       return documents;
     }),
+  }),
+
+
+  contact: router({
+    submitMessage: publicProcedure
+      .input(
+        z.object({
+          name: z.string().min(1),
+          email: z.string().email(),
+          subject: z.string().min(1),
+          message: z.string().min(1),
+        })
+      )
+      .mutation(async ({ input }) => {
+        try {
+          await createContactMessage({
+            name: input.name,
+            email: input.email,
+            subject: input.subject,
+            message: input.message,
+            status: "new",
+          });
+
+          const emailSent = await sendContactFormEmail(input);
+
+          return {
+            success: true,
+            message: "Your message has been sent successfully",
+            emailNotified: emailSent,
+          };
+        } catch (error) {
+          console.error("Error submitting contact message:", error);
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to submit contact message",
+          });
+        }
+      }),
   }),
 });
 

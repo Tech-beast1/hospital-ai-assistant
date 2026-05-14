@@ -4,6 +4,7 @@ import { useLocation } from "wouter";
 import { Home, Mail, Phone, MessageSquare, Send } from "lucide-react";
 import { useState } from "react";
 import DeveloperFooter from "@/components/DeveloperFooter";
+import { trpc } from "@/lib/trpc";
 
 export default function Contact() {
   const [, navigate] = useLocation();
@@ -23,15 +24,22 @@ export default function Contact() {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const submitMutation = trpc.contact.submitMessage.useMutation();
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In production, this would send to a backend API
-    console.log("Form submitted:", formData);
-    setSubmitted(true);
-    setTimeout(() => {
-      setFormData({ name: "", email: "", subject: "", message: "" });
-      setSubmitted(false);
-    }, 3000);
+    
+    try {
+      await submitMutation.mutateAsync(formData);
+      setSubmitted(true);
+      
+      setTimeout(() => {
+        setFormData({ name: "", email: "", subject: "", message: "" });
+        setSubmitted(false);
+      }, 3000);
+    } catch (error) {
+      console.error("Error submitting contact form:", error);
+    }
   };
 
   return (
@@ -166,10 +174,20 @@ export default function Contact() {
 
               <Button
                 type="submit"
-                className="w-full gap-2 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-white font-semibold py-3"
+                disabled={submitMutation.isPending}
+                className="w-full gap-2 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-white font-semibold py-3 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                <Send className="h-4 w-4" />
-                Send Message
+                {submitMutation.isPending ? (
+                  <>
+                    <span className="animate-spin">⏳</span>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-4 w-4" />
+                    Send Message
+                  </>
+                )}
               </Button>
             </form>
           )}

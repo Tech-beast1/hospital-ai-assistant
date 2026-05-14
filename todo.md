@@ -201,3 +201,20 @@
 - [x] Add success/error notifications
 - [x] Test delete functionality
 - [x] Verify data is completely removed
+
+
+## Contact Form Email Notifications
+- [x] Examine existing Contact Us form structure
+- [x] Create database table for contact messages
+- [x] Create backend API to save contact messages
+- [x] Set up email sending to dedzocharles1@gmail.com
+- [x] Integrate email notifications with contact form
+- [x] Test email delivery
+- [x] Verify instant notifications work
+
+
+## Patient Name Section in Assessment
+- [x] Add patient name input at beginning of assessment form
+- [x] Make name field required
+- [x] Display name in assessment summary
+- [x] Store patient name with assessment data

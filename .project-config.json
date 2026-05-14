@@ -1,0 +1,41 @@
+{
+  "build_command": "pnpm run build",
+  "capabilities": [
+    "db",
+    "server",
+    "user"
+  ],
+  "dev_command": "pnpm run dev",
+  "env_vars": {
+    "DATABASE_URL": "mysql://29Zgki9pePg5PK6.root:2pHZmT5a6QdM0jdFbW13@gateway04.us-east-1.prod.aws.tidbcloud.com:4000/EMwyecxw8qJwFqH6WwQMJu?ssl={\"rejectUnauthorized\":true}"
+  },
+  "experiments": null,
+  "git_remote": {
+    "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663403319360/EMwyecxw8qJwFqH6WwQMJu",
+    "access_key_id": "ASIAZV3A2ECZD2CKY7AG",
+    "secret_access_key": "c8UXFJMErLdErQx7alV6k2ldjurI9PgQgJ7CNOLe",
+    "session_token": "IQoJb3JpZ2luX2VjEJf//////////wEaCXVzLWVhc3QtMSJHMEUCIQDwIP77Zb9GbZzEDVwrLM/TpgzG4+gKGH4GbMvIUXCCYwIgHCxs/aGC+RwQP64aGPmGmY/7SL/5JLx7HwyhxU8poG0q9gMIXxAEGgw2NjUzODYwOTg4NjYiDPrpOfQ4+21cheo1OCrTA1cFopfF6F32ApXgzbQSiu/0X8mZ23nEjxO4UdHS2gXfioJpnAF1v/ug7j0WshlkK1VKvJ+OrxWLMsZF92MYMmLQ++sev5KMuGrGHLT+cvbqWQDk3tsOuIMqCXuxI3fRYUTi7gPmPiYsya8zLas+pT8xHrZGPW8KH0jwAWmTsj0Hqvofk3KrNeiIGwIzAw5ogbnJcNMsaX8/ISAftSn50uR4VfswTxZYeH4xiRVtUZDqhqt+7V/Kv+gspo9ylbXnftrFrOGlYkkdodLWV+BINcqStsYyjHIukTzpSq+0mgDGLv+0rkBdnxVTsMek32twRr+1OpDXFwSZ54YisfwZ8qAXZrXuiav1VpYpsADzyQ1tgSi0LMCrobi52xhB0Vz6Ci/b3SdWSJbca5ICShgDncfCMSc/gkAL5y8fxwwJ0RVy8VuKwCHGzCLIqwfXsdwuDRjP4cEtOyKilDdIW2e+0/UEWAg974K40+YyOazyNjqDltIV+Cdo2AN1XHFpwT9o+UJCvJSFvOFh4rGX9LrkxvZ1bmwra65iYFoXr213LUJY5xkHpt/4Y5vFYcB2HSjCgmuCaFlg7E59WEvELEkW7uvk77B+FLwTnVOhGJ1Vkc+ftCLyMJGwl9AGOp0BN8q2pWYJzFd0y+XhRkD4OZdM/29MkBaFKpJS4mVaS2uFtoipySzBbWnRKDKdDwAZOlmkkwZn9khEa+mie98zK8p7dqnjmrtgHhZo/S1l29t1y6GuYddf88WOyj3ohAAdnT1UB5+5r1Z+M5DT7a9+n3CrmUIHzMApLnpOyez2QGqTXvZrf+kGASLOKphnPM669i3+HZY5bvbuRfvsmw==",
+    "expiration": "2026-05-15T02:11:29.000Z"
+  },
+  "name": "hospital-ai-assistant",
+  "path": "/home/ubuntu/hospital-ai-assistant",
+  "port": 3000,
+  "secrets": {
+    "BUILT_IN_FORGE_API_KEY": "RhHu7pkDahEcvXaP6nfHxn",
+    "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
+    "JWT_SECRET": "CTyPAKic4qEXcBKMVbn9Uv",
+    "OAUTH_SERVER_URL": "https://api.manus.im",
+    "OWNER_NAME": "Charles Dedzo",
+    "OWNER_OPEN_ID": "jZpDksVFtckJZTfPZrksRZ",
+    "VITE_ANALYTICS_ENDPOINT": "https://manus-analytics.com",
+    "VITE_ANALYTICS_WEBSITE_ID": "d03943e8-e2fb-46e9-912f-0ee83d1ce933",
+    "VITE_APP_ID": "EMwyecxw8qJwFqH6WwQMJu",
+    "VITE_APP_LOGO": "https://files.manuscdn.com/user_upload_by_module/web_dev_logo/310519663403319360/oxjlEpnQiHHjpBZU.png",
+    "VITE_APP_TITLE": "Hospital AI Assistant",
+    "VITE_FRONTEND_FORGE_API_KEY": "G52G568eThi3qaUoevf4Zf",
+    "VITE_FRONTEND_FORGE_API_URL": "https://forge.manus.ai",
+    "VITE_OAUTH_PORTAL_URL": "https://manus.im"
+  },
+  "template_id": "web-db-user",
+  "test_command": "pnpm test"
+}

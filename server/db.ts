@@ -16,10 +16,12 @@ import {
   auditLogs,
   systemAlerts,
   patientDocuments,
+  contactMessages,
   type PatientMedicalHistory,
   type PatientInteraction,
   type SystemAlert,
   type AuditLog,
+  type InsertContactMessage,
 } from "../drizzle/schema";
 import { ENV } from "./_core/env";
 
@@ -616,5 +618,73 @@ export async function deleteAllPatientRecords(): Promise<boolean> {
   } catch (error) {
     console.error("Error deleting all patient records:", error);
     throw new Error("Failed to delete patient records");
+  }
+}
+
+
+/**
+ * Create a new contact form message
+ * @param message Contact message data
+ * @returns The created contact message
+ */
+export async function createContactMessage(
+  message: InsertContactMessage
+): Promise<any> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  try {
+    const result = await db.insert(contactMessages).values(message);
+    return result;
+  } catch (error) {
+    console.error("Error creating contact message:", error);
+    throw new Error("Failed to save contact message");
+  }
+}
+
+/**
+ * Get all contact messages
+ * @returns List of all contact messages
+ */
+export async function getAllContactMessages(): Promise<any[]> {
+  const db = await getDb();
+  if (!db) {
+    return [];
+  }
+
+  try {
+    const messages = await db
+      .select()
+      .from(contactMessages)
+      .orderBy(desc(contactMessages.createdAt));
+    return messages;
+  } catch (error) {
+    console.error("Error fetching contact messages:", error);
+    return [];
+  }
+}
+
+/**
+ * Mark contact message as read
+ * @param messageId Contact message ID
+ * @returns Updated message
+ */
+export async function markContactMessageAsRead(messageId: number): Promise<any> {
+  const db = await getDb();
+  if (!db) {
+    throw new Error("Database not available");
+  }
+
+  try {
+    await db
+      .update(contactMessages)
+      .set({ status: "read" })
+      .where(eq(contactMessages.id, messageId));
+    return true;
+  } catch (error) {
+    console.error("Error marking message as read:", error);
+    throw new Error("Failed to update message");
   }
 }
