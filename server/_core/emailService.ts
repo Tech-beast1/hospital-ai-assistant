@@ -69,7 +69,7 @@ export async function sendContactFormEmail(contactData: {
   subject: string;
   message: string;
 }): Promise<boolean> {
-  const adminEmail = "dedzocharles1@gmail.com";
+  const adminEmail = ENV.contactFormEmail;
 
   const htmlContent = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
