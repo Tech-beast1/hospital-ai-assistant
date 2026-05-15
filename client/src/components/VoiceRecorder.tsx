@@ -225,7 +225,7 @@ export default function VoiceRecorder({ onTranscriptionComplete, isLoading }: Vo
 
         {/* Info */}
         <p className="text-xs text-gray-400 mt-4">
-          💡 Tip: Speak clearly about your symptoms, medical history, allergies, and current medications. The AI will transcribe and analyze your report.
+          💡 Tip: Start by saying your name, then speak clearly about your symptoms, medical history, allergies, and current medications. The AI will transcribe and analyze your report.
         </p>
       </div>
     </Card>
