@@ -119,6 +119,9 @@ export default function Home() {
               {isAuthenticated && (
                 <div className="mt-8 pt-8 border-t border-cyan-500/20">
                   <p className="text-sm text-gray-400 mb-4">Or record your symptoms instead:</p>
+                  <div className="bg-cyan-500/10 border border-cyan-500/30 rounded-lg p-3 mb-4">
+                    <p className="text-xs text-cyan-300">💡 <strong>Tip:</strong> Start by saying your name, then describe your symptoms clearly.</p>
+                  </div>
                   <VoiceRecorder
                     onTranscriptionComplete={(text) => {
                       sessionStorage.setItem("voiceTranscription", text);
