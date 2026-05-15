@@ -128,8 +128,11 @@ export default function MedicalStaffDashboard() {
   };
 
   const handleReview = (id: number) => {
-    // Navigate to review page if available
-    console.log("Review interaction:", id);
+    const selected = interactions.find((i) => i.id === id);
+    if (selected) {
+      setSelectedAssessment(selected);
+      setIsModalOpen(true);
+    }
   };
 
   // Delete all records mutation

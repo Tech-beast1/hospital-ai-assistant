@@ -254,6 +254,13 @@ export default function UserDashboard() {
                         setIsModalOpen(true);
                       }
                     }}
+                    onReview={(id) => {
+                      const selected = interactions.find((i) => i.id === id);
+                      if (selected) {
+                        setSelectedAssessment(selected);
+                        setIsModalOpen(true);
+                      }
+                    }}
                   />
                 ))}
               </div>

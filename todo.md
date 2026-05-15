@@ -226,3 +226,10 @@
 - [x] Update dashboard to display patient names with assessments
 - [x] Match patient names with their assessments
 - [x] Test patient name storage and retrieval
+
+
+## Review Button Fix
+- [ ] Diagnose review button issue on dashboard
+- [ ] Fix review button click handler
+- [ ] Ensure modal opens when review button clicked
+- [ ] Test review button on both dashboards
