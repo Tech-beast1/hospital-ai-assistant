@@ -1,7 +1,9 @@
-/**
+/*
  * Report Generator - Creates professional PDF medical reports
- * Uses browser's print functionality to generate PDFs
+ * Uses html2pdf library to generate PDFs
  */
+
+import html2pdf from 'html2pdf.js';
 
 interface AnalysisData {
   interactionId: number;
@@ -98,106 +100,105 @@ export function generatePDFReport(data: AnalysisData): void {
           color: #ea580c;
         }
         
-        .section {
+        .urgency-section {
+          background: #fef2f2;
+          border-left: 4px solid #dc2626;
+          padding: 20px;
+          margin-bottom: 30px;
+          border-radius: 4px;
+        }
+        
+        .urgency-section.moderate {
+          background: #fffbeb;
+          border-left-color: #d97706;
+        }
+        
+        .urgency-section.routine {
+          background: #f0fdf4;
+          border-left-color: #16a34a;
+        }
+        
+        .urgency-section h2 {
+          margin-bottom: 10px;
+          font-size: 18px;
+        }
+        
+        .conditions-section {
           margin-bottom: 30px;
         }
         
-        .section h2 {
+        .conditions-section h2 {
           color: #0891b2;
-          font-size: 18px;
+          font-size: 20px;
           margin-bottom: 15px;
+          border-bottom: 2px solid #0891b2;
           padding-bottom: 10px;
-          border-bottom: 2px solid #e0f2fe;
         }
         
-        .urgency-critical {
-          background: #fee2e2;
-          border-left: 4px solid #dc2626;
-          padding: 15px;
-          margin-bottom: 20px;
-        }
-        
-        .urgency-urgent {
-          background: #fed7aa;
-          border-left: 4px solid #ea580c;
-          padding: 15px;
-          margin-bottom: 20px;
-        }
-        
-        .urgency-moderate {
-          background: #fef3c7;
-          border-left: 4px solid #eab308;
-          padding: 15px;
-          margin-bottom: 20px;
-        }
-        
-        .urgency-routine {
-          background: #dcfce7;
-          border-left: 4px solid #16a34a;
-          padding: 15px;
-          margin-bottom: 20px;
-        }
-        
-        .urgency-critical h3,
-        .urgency-urgent h3,
-        .urgency-moderate h3,
-        .urgency-routine h3 {
-          font-size: 16px;
-          margin-bottom: 8px;
-        }
-        
-        .condition {
+        .condition-item {
           background: #f8fafc;
           border: 1px solid #e2e8f0;
           border-radius: 6px;
-          padding: 12px;
+          padding: 15px;
           margin-bottom: 12px;
         }
         
         .condition-name {
-          font-weight: 600;
+          font-weight: bold;
           color: #1e293b;
-          margin-bottom: 5px;
-        }
-        
-        .condition-confidence {
-          color: #0891b2;
-          font-size: 13px;
-          font-weight: 500;
+          font-size: 16px;
           margin-bottom: 8px;
         }
         
-        .condition-reasoning {
+        .confidence-bar {
+          background: #e2e8f0;
+          height: 8px;
+          border-radius: 4px;
+          overflow: hidden;
+          margin-bottom: 8px;
+        }
+        
+        .confidence-fill {
+          height: 100%;
+          background: linear-gradient(90deg, #0891b2, #06b6d4);
+          border-radius: 4px;
+        }
+        
+        .confidence-text {
+          font-size: 12px;
           color: #64748b;
+          margin-bottom: 8px;
+        }
+        
+        .reasoning {
           font-size: 13px;
-          line-height: 1.5;
+          color: #475569;
+          font-style: italic;
         }
         
-        .recommendations {
-          background: #f0f9fa;
-          border-radius: 6px;
-          padding: 15px;
+        .recommendations-section {
+          margin-bottom: 30px;
         }
         
-        .recommendations ul {
-          list-style: none;
-          padding: 0;
-        }
-        
-        .recommendations li {
-          padding: 8px 0;
-          padding-left: 25px;
-          position: relative;
-          font-size: 14px;
-          color: #334155;
-        }
-        
-        .recommendations li:before {
-          content: "✓";
-          position: absolute;
-          left: 0;
+        .recommendations-section h2 {
           color: #0891b2;
-          font-weight: bold;
+          font-size: 20px;
+          margin-bottom: 15px;
+          border-bottom: 2px solid #0891b2;
+          padding-bottom: 10px;
+        }
+        
+        .recommendations-section ul {
+          list-style: none;
+          padding-left: 0;
+        }
+        
+        .recommendations-section li {
+          background: #f0fdf4;
+          border-left: 4px solid #16a34a;
+          padding: 12px;
+          margin-bottom: 10px;
+          border-radius: 4px;
         }
         
         .footer {
@@ -205,98 +206,62 @@ export function generatePDFReport(data: AnalysisData): void {
           padding-top: 20px;
           margin-top: 40px;
           font-size: 12px;
-          color: #666;
+          color: #999;
           text-align: center;
-        }
-        
-        .footer p {
-          margin: 5px 0;
-        }
-        
-        @media print {
-          body {
-            padding: 0;
-          }
-          .container {
-            max-width: 100%;
-          }
         }
       </style>
     </head>
     <body>
       <div class="container">
-        <!-- Header -->
         <div class="header">
-          <h1>Hospital AI Assistant</h1>
+          <h1>🏥 Hospital AI Assistant</h1>
           <p>Medical Symptom Analysis Report</p>
         </div>
-        
-        <!-- Report Information -->
+
         <div class="report-info">
           <p><strong>Report ID:</strong> ${reportId}</p>
           <p><strong>Generated:</strong> ${timestamp}</p>
-          <p><strong>Analysis ID:</strong> ${data.interactionId}</p>
+          <p><strong>Status:</strong> AI Analysis - For Healthcare Provider Review</p>
         </div>
-        
-        <!-- Critical Disclaimer -->
+
         <div class="disclaimer">
-          <strong>⚠️ IMPORTANT MEDICAL DISCLAIMER</strong>
+          <strong>⚠️ IMPORTANT DISCLAIMER:</strong>
+          <p style="margin-top: 10px;">This report is generated by an AI system and is NOT a medical diagnosis. It is intended to support clinical decision-making and should be reviewed by a qualified healthcare professional. Always consult with a licensed physician for proper diagnosis and treatment.</p>
+        </div>
+
+        <div class="urgency-section ${data.analysis.urgencyLevel}">
+          <h2>${getUrgencyTitle(data.analysis.urgencyLevel)}</h2>
+          <p>${getUrgencyDescription(data.analysis.urgencyLevel)}</p>
+        </div>
+
+        <div class="conditions-section">
+          <h2>Possible Conditions (AI Analysis)</h2>
+          ${data.analysis.possibleConditions.map(condition => `
+            <div class="condition-item">
+              <div class="condition-name">${condition.condition}</div>
+              <div class="confidence-text">Confidence: ${(condition.confidence * 100).toFixed(1)}%</div>
+              <div class="confidence-bar">
+                <div class="confidence-fill" style="width: ${condition.confidence * 100}%"></div>
+              </div>
+              <div class="reasoning"><strong>Analysis:</strong> ${condition.reasoning}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div class="recommendations-section">
+          <h2>Clinical Recommendations</h2>
+          <ul>
+            ${data.analysis.recommendations.map(rec => `<li>${rec}</li>`).join('')}
+          </ul>
+        </div>
+
+        <div class="disclaimer">
+          <strong>📋 Additional Notes:</strong>
           <p style="margin-top: 10px;">
-            This AI analysis is for informational purposes only and does NOT replace professional medical advice. 
-            Always consult with a licensed healthcare provider for diagnosis and treatment. 
-            In case of medical emergency, call 911 immediately.
+            ${data.disclaimers.join('<br/>')}
           </p>
         </div>
-        
-        <!-- Urgency Level -->
-        <div class="section">
-          <div class="urgency-${data.analysis.urgencyLevel}">
-            <h3>${getUrgencyTitle(data.analysis.urgencyLevel)}</h3>
-            <p>${getUrgencyDescription(data.analysis.urgencyLevel)}</p>
-          </div>
-        </div>
-        
-        <!-- Possible Conditions -->
-        <div class="section">
-          <h2>Possible Conditions</h2>
-          ${data.analysis.possibleConditions
-            .map(
-              (condition) => `
-            <div class="condition">
-              <div class="condition-name">${condition.condition}</div>
-              <div class="condition-confidence">Confidence: ${Math.round(condition.confidence * 100)}%</div>
-              <div class="condition-reasoning">${condition.reasoning}</div>
-            </div>
-          `
-            )
-            .join("")}
-        </div>
-        
-        <!-- Clinical Recommendations -->
-        <div class="section">
-          <h2>Clinical Recommendations</h2>
-          <div class="recommendations">
-            <ul>
-              ${data.analysis.recommendations.map((rec) => `<li>${rec}</li>`).join("")}
-            </ul>
-          </div>
-        </div>
-        
-        <!-- Additional Information -->
-        ${
-          data.disclaimers.length > 0
-            ? `
-          <div class="section">
-            <h2>Additional Information</h2>
-            <div style="background: #f0f9fa; border-radius: 6px; padding: 15px; font-size: 14px; color: #334155;">
-              ${data.disclaimers.map((d) => `<p style="margin-bottom: 10px;">• ${d}</p>`).join("")}
-            </div>
-          </div>
-        `
-            : ""
-        }
-        
-        <!-- Footer -->
+
         <div class="footer">
           <p>This report has been generated by the Hospital AI Assistant system.</p>
           <p>Please share this report with your healthcare provider for professional evaluation and diagnosis.</p>
@@ -307,25 +272,29 @@ export function generatePDFReport(data: AnalysisData): void {
     </html>
   `;
 
-  // Create a blob and download
-  const blob = new Blob([htmlContent], { type: "text/html" });
-  const url = URL.createObjectURL(blob);
-
-  // Create a temporary link element for download
-  const link = document.createElement("a");
-  link.href = url;
-  link.download = `Hospital_AI_Report_${reportId}.html`;
-  link.style.display = "none";
-
-  // Append to body, click to download, then remove
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
+  // Create a temporary container for PDF generation
+  const element = document.createElement('div');
+  element.innerHTML = htmlContent;
+  element.style.display = 'none';
+  document.body.appendChild(element);
   
-  // Clean up the object URL after download completes
-  setTimeout(() => {
-    URL.revokeObjectURL(url);
-  }, 100);
+  // PDF generation options
+  const options: any = {
+    margin: 10,
+    filename: `Hospital_AI_Report_${reportId}.pdf`,
+    image: { type: 'jpeg', quality: 0.98 },
+    html2canvas: { scale: 2 },
+    jsPDF: { orientation: 'portrait', unit: 'mm', format: 'a4' }
+  };
+  
+  // Generate and download PDF
+  html2pdf().set(options).from(element).save().then(() => {
+    // Clean up the temporary element
+    document.body.removeChild(element);
+  }).catch((error) => {
+    console.error('PDF generation error:', error);
+    document.body.removeChild(element);
+  });
 }
 
 function getUrgencyTitle(level: string): string {
