@@ -120,7 +120,11 @@ export default function Home() {
                 <div className="mt-8 pt-8 border-t border-cyan-500/20">
                   <p className="text-sm text-gray-400 mb-4">Or record your symptoms instead:</p>
                   <VoiceRecorder
+                    autoAnalyze={true}
                     onTranscriptionComplete={(text) => {
+                      sessionStorage.setItem("voiceTranscription", text);
+                    }}
+                    onAutoAnalyze={async (text) => {
                       sessionStorage.setItem("voiceTranscription", text);
                       setLocation("/intake");
                     }}

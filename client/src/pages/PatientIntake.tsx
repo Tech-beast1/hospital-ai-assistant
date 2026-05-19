@@ -36,14 +36,58 @@ export default function PatientIntake() {
   const analyzeMutation = trpc.symptoms.analyzeSymptoms.useMutation();
   const updateHistoryMutation = trpc.patient.updateMedicalHistory.useMutation();
 
-  // Pre-fill form with voice transcription if available
+  // Pre-fill form with voice transcription if available and trigger auto-analysis
   useEffect(() => {
     const voiceTranscription = sessionStorage.getItem("voiceTranscription");
     if (voiceTranscription) {
-      setSymptoms([{ name: voiceTranscription, duration: "today", severity: 5 }]);
+      const symptomData = [{ name: voiceTranscription, duration: "today", severity: 5 }];
+      setSymptoms(symptomData);
       sessionStorage.removeItem("voiceTranscription");
+      
+      // Trigger auto-analysis immediately
+      setTimeout(() => {
+        triggerAutoAnalysis(symptomData);
+      }, 100);
     }
   }, []);
+  
+  // Auto-analysis function triggered by voice recording
+  const triggerAutoAnalysis = async (symptomData: Array<{ name: string; duration: string; severity: number }>) => {
+    try {
+      setIsAnalyzing(true);
+      setElapsedSeconds(0);
+      const controller = new AbortController();
+      setAbortController(controller);
+
+      // Update medical history first
+      await updateHistoryMutation.mutateAsync(medicalHistory);
+
+      // Then analyze symptoms
+      const result = await analyzeMutation.mutateAsync({
+        symptoms: symptomData,
+        symptomDuration: "as described",
+        medicalHistory,
+        language,
+        patientName: patientName || "Patient",
+      });
+
+      // Store the analysis data
+      sessionStorage.setItem(
+        `analysis_${result.interactionId}`,
+        JSON.stringify({
+          interactionId: result.interactionId,
+          analysis: result.analysis,
+          disclaimers: result.disclaimers,
+        })
+      );
+
+      setIsAnalyzing(false);
+      setLocation(`/results/${result.interactionId}`);
+    } catch (error) {
+      console.error("Auto-analysis error:", error);
+      setIsAnalyzing(false);
+    }
+  }
 
   const handleAddSymptom = () => {
     if (currentSymptom.name.trim()) {
