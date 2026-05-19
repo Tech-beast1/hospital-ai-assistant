@@ -319,18 +319,29 @@ export function generatePDFReport(data: AnalysisData): void {
   // Also open print dialog for PDF generation
   const printWindow = window.open(url, "_blank");
   if (printWindow) {
-    printWindow.addEventListener("load", () => {
+    const handleLoad = () => {
       setTimeout(() => {
         printWindow.print();
+        setTimeout(() => {
+          printWindow.close();
+        }, 500);
       }, 250);
-    });
+    };
+    
+    printWindow.addEventListener("load", handleLoad);
+    
+    setTimeout(() => {
+      printWindow.removeEventListener("load", handleLoad);
+    }, 2000);
   }
 
-  // Fallback: trigger download of HTML file
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
-  URL.revokeObjectURL(url);
+  
+  setTimeout(() => {
+    URL.revokeObjectURL(url);
+  }, 100);
 }
 
 function getUrgencyTitle(level: string): string {
