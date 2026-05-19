@@ -311,34 +311,18 @@ export function generatePDFReport(data: AnalysisData): void {
   const blob = new Blob([htmlContent], { type: "text/html" });
   const url = URL.createObjectURL(blob);
 
-  // Create a temporary link element
+  // Create a temporary link element for download
   const link = document.createElement("a");
   link.href = url;
   link.download = `Hospital_AI_Report_${reportId}.html`;
+  link.style.display = "none";
 
-  // Also open print dialog for PDF generation
-  const printWindow = window.open(url, "_blank");
-  if (printWindow) {
-    const handleLoad = () => {
-      setTimeout(() => {
-        printWindow.print();
-        setTimeout(() => {
-          printWindow.close();
-        }, 500);
-      }, 250);
-    };
-    
-    printWindow.addEventListener("load", handleLoad);
-    
-    setTimeout(() => {
-      printWindow.removeEventListener("load", handleLoad);
-    }, 2000);
-  }
-
+  // Append to body, click to download, then remove
   document.body.appendChild(link);
   link.click();
   document.body.removeChild(link);
   
+  // Clean up the object URL after download completes
   setTimeout(() => {
     URL.revokeObjectURL(url);
   }, 100);
