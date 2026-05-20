@@ -857,6 +857,7 @@ IMPORTANT: This is for clinical decision support only. Always emphasize that a l
           email: z.string().email(),
           subject: z.string().min(1),
           message: z.string().min(1),
+          userLoginEmail: z.string().email().nullable().optional(),
         })
       )
       .mutation(async ({ input }) => {
@@ -869,7 +870,13 @@ IMPORTANT: This is for clinical decision support only. Always emphasize that a l
             status: "new",
           });
 
-          const emailSent = await sendContactFormEmail(input);
+          const emailSent = await sendContactFormEmail({
+            name: input.name,
+            email: input.email,
+            subject: input.subject,
+            message: input.message,
+            userLoginEmail: input.userLoginEmail || undefined,
+          });
 
           return {
             success: true,

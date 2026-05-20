@@ -78,6 +78,7 @@ export async function sendContactFormEmail(contactData: {
   email: string;
   subject: string;
   message: string;
+  userLoginEmail?: string;
 }): Promise<boolean> {
   const adminEmail = ENV.contactFormEmail;
 
@@ -97,6 +98,15 @@ export async function sendContactFormEmail(contactData: {
             </a>
           </p>
         </div>
+
+        ${contactData.userLoginEmail ? `<div style="margin-bottom: 20px;">
+          <h3 style="color: #374151; margin-bottom: 8px;">Account Email (Login):</h3>
+          <p style="color: #6b7280; margin: 0;">
+            <a href="mailto:${escapeHtml(contactData.userLoginEmail)}" style="color: #0ea5e9; text-decoration: none;">
+              ${escapeHtml(contactData.userLoginEmail)}
+            </a>
+          </p>
+        </div>` : ''}
 
         <div style="margin-bottom: 20px;">
           <h3 style="color: #374151; margin-bottom: 8px;">Subject:</h3>
@@ -127,7 +137,7 @@ export async function sendContactFormEmail(contactData: {
     to: adminEmail,
     subject: `New Contact Form: ${contactData.subject}`,
     html: htmlContent,
-    text: `New Contact Form Submission\n\nFrom: ${contactData.name} (${contactData.email})\nSubject: ${contactData.subject}\n\nMessage:\n${contactData.message}`,
+    text: `New Contact Form Submission\n\nFrom: ${contactData.name} (${contactData.email})\n${contactData.userLoginEmail ? `Account Email: ${contactData.userLoginEmail}\n` : ''}Subject: ${contactData.subject}\n\nMessage:\n${contactData.message}`,
   });
 }
 

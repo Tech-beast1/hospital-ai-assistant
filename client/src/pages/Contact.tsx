@@ -2,19 +2,38 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { useLocation } from "wouter";
 import { Home, Mail, Phone, MessageSquare, Send } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import DeveloperFooter from "@/components/DeveloperFooter";
 import { trpc } from "@/lib/trpc";
+import { useAuth } from "@/_core/hooks/useAuth";
 
 export default function Contact() {
   const [, navigate] = useLocation();
-  const [formData, setFormData] = useState({
+  const { user } = useAuth();
+  const [formData, setFormData] = useState<{
+    name: string;
+    email: string;
+    subject: string;
+    message: string;
+    userLoginEmail: string | null;
+  }>({
     name: "",
     email: "",
     subject: "",
     message: "",
+    userLoginEmail: user?.email || null,
   });
   const [submitted, setSubmitted] = useState(false);
+
+  // Populate user's login email when authenticated
+  useEffect(() => {
+    if (user?.email) {
+      setFormData((prev) => ({
+        ...prev,
+        userLoginEmail: user.email,
+      }));
+    }
+  }, [user?.email]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -34,7 +53,13 @@ export default function Contact() {
       setSubmitted(true);
       
       setTimeout(() => {
-        setFormData({ name: "", email: "", subject: "", message: "" });
+        setFormData({
+          name: "",
+          email: "",
+          subject: "",
+          message: "",
+          userLoginEmail: user?.email || "",
+        });
         setSubmitted(false);
       }, 3000);
     } catch (error) {
@@ -171,6 +196,17 @@ export default function Contact() {
                   placeholder="Your message here..."
                 />
               </div>
+
+              {user?.email && (
+                <div className="bg-slate-800/50 border border-cyan-500/30 rounded-lg p-4">
+                  <p className="text-sm text-gray-400">
+                    <strong className="text-cyan-300">Account Email:</strong> {user.email}
+                  </p>
+                  <p className="text-xs text-gray-500 mt-2">
+                    This is your login email and will be included with your message.
+                  </p>
+                </div>
+              )}
 
               <Button
                 type="submit"
