@@ -13,10 +13,10 @@
   "experiments": null,
   "git_remote": {
     "repo_url": "s3://vida-prod-gitrepo/webdev-git/310519663403319360/EMwyecxw8qJwFqH6WwQMJu",
-    "access_key_id": "ASIAZV3A2ECZKAUT5CMF",
-    "secret_access_key": "ViXXZa0enhhMVAySQ/rNU82ukuOmLfpHLGzmGDva",
-    "session_token": "IQoJb3JpZ2luX2VjEK///////////wEaCXVzLWVhc3QtMSJIMEYCIQCYMTRNs7Jv0jNvhszXPMJ4cK8w4DvDOlgG3fpcdJDU4QIhAKaVor/NcyHEUFI+/i3smSVuW2fJxJooKOo1NZSA4b/oKvYDCHgQBBoMNjY1Mzg2MDk4ODY2IgxwWN2hgXhhrjpYT8Eq0wNCSVIQWL45FS/V01GU+cZWWFfB+d1p+C9IOagu7YShb5r4qC/Oyd6mQgT4EsreCzrooy13/k35JtQhrLamgpmu6lvVfsGQEwYSvKquFjQ6keRixQYSxfA5eOormbPl7jwUuabD6Y8rpgDEqr4JpX8Dla9CdCcI6uaYRGRJQ5DHy7CVH4oxVtcIp9L7V2fVbZkcKKkuDnT4voD+kelEwaLca7BHA2ApmDvBwoGJXx87AU7GHd1QF1PboS5C1/WjWhsjGIyl8Ghs3QP5YKvd+VrRgj9mmF56HeQPppSq0my+pooFcLHJRel8wEUq58vrR2E9WYaWy69Zb/OxlBtQscZplnlfujQjoagoqNdwmPiQD1TOoyJl+aiGLzs3boceDrCRYoLbDS84G/8rqxaIrdHeSdLLiGqjpc6uuTuQVxp0/nOMGBoklxjgofxNSRVa/3P64cwNzui3LxakH91JsCbzU/weIZHDQVZEWbLYMdmq28LAGtsHqRxWPFXz5VL3sBoY3FxGtpjxZStiZW6Sne4kgeNkqUgcJ2SGNbOczMO5JX6T82VwKvp+EOiLRCYuI3zOKavlqMvo5ejLfGkXwelV7krRSSSqKy5DKw6qEUMTSZxf9zDW35zQBjqcAVriTtwzDiH7A9ZhRFGB10yaUTyUmbnXRMGCs8ep1bp3i/HgdYTA+uefYKNCOYGMm2epPx0JJ2Rokni+uCADoNYCzRL/d5eA7Ihz6ev9x1g0lc/Oc1vMR6tqrsA+NxAd+aGZs1AcZhHeUGvFQtvoL7zZMdCrLRaEqHJlEKbVDwnB+RvY82zrpaFFjyGEPw57hsHc1NhREsC1Arsw2w==",
-    "expiration": "2026-05-16T02:38:14.000Z"
+    "access_key_id": "ASIAZV3A2ECZLKEEGG6T",
+    "secret_access_key": "mXC85CxITKswaiiEOhLU6kBDkg9TB6n9fqb4DfBi",
+    "session_token": "IQoJb3JpZ2luX2VjECIaCXVzLWVhc3QtMSJHMEUCIQCjYcyCxfJnbkvVF+o0k5HQ+1/E6NGvQ7PNQghFLUHpNQIgesR5F+9tpUA3J8AkPpod/nAVFni9iWoFKlN1A8Oi4zIq/wMI6///////////ARAEGgw2NjUzODYwOTg4NjYiDPGp2n5kFLFHVl94KCrTAyT3DAbUsMEMFgSy2PMOVzrPXLrKyEFKpfn9zo7Vl9UirHllXiEEfM9xaZi1pRycsF419PpSWytXyEOvS7JJm8xD83tyk3GLV+0xqIzTkNHiEtev//WW5Od8WpEAlmcH1i7ogVSxMl4RWWr9vR63f11GsvBH+xupuWeuQ9hBYswXoALQzxWt+CslsdnUdExKVghJLIydRitjm2kyMXTaAgqeMxAvB85vtOTuK4ldfDRm1BYQ49SI6kAysqj1Txsx/lAN/oo4Q2r/fkQ1flNo2y5SlZEPTTo0KXcadgubl1VxZ2I9lHd5NU5QeOxWG2eFC0FhqAzeNpHK2nLISbILfeaLzqK3U53RZMlYm1fOuCwE0GDa9c+jpShRGNVsOvDfZAs2sw3K1jt5cFk/Ox36wWxHs04Gw4/m03OvzWMb9QSQ5CY9IBhSt0RsASJB2b9R5OIbl5cE+Ry2X5Hd2smu88WoO2MxS6U2k6lry8AG+k+0pAhVtg5XoOeF1TM/lv8a4BZJm/JIOczdgtdQvDZRDEMDjkerNimL4TG7m1avkJ3cNDfapXn83fTdmKt4KOIV9qbHRtCIrvo8fR7XiR+uahAH6gkDBQZxPrbDPoiGNPj0ca3nMIiGttAGOp0BPnGP16EyPuBLCAM1p6uKs3SVN+JU8iF2KLNK1xSQtWoZm7yU7mpP7fFuNEXbXZfmzXGv4/fYhyDUw2DejoKA+aMz+4WjAtiyQAWUZTBDvjXqr7pDTK3asihqBBAontFETeeyOMqWP/pRLcKdUgjdX+099B5DvFR1UUnyBlfO1wk5ff/jBiXqQMYsSo/tqKqrt7+8Oh/cu3od4bOM5Q==",
+    "expiration": "2026-05-20T21:46:48.000Z"
   },
   "name": "hospital-ai-assistant",
   "path": "/home/ubuntu/hospital-ai-assistant",
@@ -25,6 +25,7 @@
     "BUILT_IN_FORGE_API_KEY": "RhHu7pkDahEcvXaP6nfHxn",
     "BUILT_IN_FORGE_API_URL": "https://forge.manus.ai",
     "CONTACT_FORM_EMAIL": "dedzocharles1@gmail.com",
+    "GMAIL_APP_PASSWORD": "fxni jwaf mepm qykm",
     "JWT_SECRET": "CTyPAKic4qEXcBKMVbn9Uv",
     "OAUTH_SERVER_URL": "https://api.manus.im",
     "OWNER_NAME": "Charles Dedzo",

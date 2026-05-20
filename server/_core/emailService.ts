@@ -1,4 +1,5 @@
 import { ENV } from "./env";
+import nodemailer from "nodemailer";
 
 export type EmailPayload = {
   to: string;
@@ -7,50 +8,59 @@ export type EmailPayload = {
   text?: string;
 };
 
+let transporter: nodemailer.Transporter | null = null;
+
 /**
- * Send an email using the Manus Email Service
+ * Initialize Gmail transporter with App Password
+ */
+function getTransporter(): nodemailer.Transporter | null {
+  if (transporter) {
+    return transporter;
+  }
+
+  if (!ENV.gmailAppPassword || !ENV.contactFormEmail) {
+    console.error("[Email] Gmail credentials not configured");
+    return null;
+  }
+
+  try {
+    transporter = nodemailer.createTransport({
+      service: "gmail",
+      auth: {
+        user: ENV.contactFormEmail,
+        pass: ENV.gmailAppPassword,
+      },
+    });
+    console.log("[Email] Gmail transporter initialized");
+    return transporter;
+  } catch (error) {
+    console.error("[Email] Failed to initialize Gmail transporter:", error);
+    return null;
+  }
+}
+
+/**
+ * Send an email using Gmail SMTP
  * @param payload Email data including recipient, subject, and content
  * @returns true if email was sent successfully, false otherwise
  */
 export async function sendEmail(payload: EmailPayload): Promise<boolean> {
-  if (!ENV.forgeApiUrl || !ENV.forgeApiKey) {
-    console.error("Email service not configured");
+  const transporter = getTransporter();
+  if (!transporter) {
+    console.error("[Email] Email service not configured");
     return false;
   }
 
   try {
-    const endpoint = new URL(
-      "webdevtoken.v1.WebDevService/SendEmail",
-      ENV.forgeApiUrl.endsWith("/") ? ENV.forgeApiUrl : `${ENV.forgeApiUrl}/`
-    ).toString();
-
-    const response = await fetch(endpoint, {
-      method: "POST",
-      headers: {
-        accept: "application/json",
-        authorization: `Bearer ${ENV.forgeApiKey}`,
-        "content-type": "application/json",
-        "connect-protocol-version": "1",
-      },
-      body: JSON.stringify({
-        to: payload.to,
-        subject: payload.subject,
-        html: payload.html,
-        text: payload.text || payload.html,
-      }),
+    const info = await transporter.sendMail({
+      from: ENV.contactFormEmail,
+      to: payload.to,
+      subject: payload.subject,
+      html: payload.html,
+      text: payload.text || payload.html,
     });
 
-    if (!response.ok) {
-      const detail = await response.text().catch(() => "");
-      console.error(
-        `[Email] Failed to send email (${response.status} ${response.statusText})${
-          detail ? `: ${detail}` : ""
-        }`
-      );
-      return false;
-    }
-
-    console.log(`[Email] Successfully sent email to ${payload.to}`);
+    console.log(`[Email] Successfully sent email to ${payload.to}. Message ID: ${info.messageId}`);
     return true;
   } catch (error) {
     console.error("[Email] Error sending email:", error);

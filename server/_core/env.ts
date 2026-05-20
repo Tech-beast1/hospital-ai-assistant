@@ -8,4 +8,5 @@ export const ENV = {
   forgeApiUrl: process.env.BUILT_IN_FORGE_API_URL ?? "",
   forgeApiKey: process.env.BUILT_IN_FORGE_API_KEY ?? "",
   contactFormEmail: process.env.CONTACT_FORM_EMAIL ?? "dedzocharles1@gmail.com",
+  gmailAppPassword: process.env.GMAIL_APP_PASSWORD ?? "",
 };
