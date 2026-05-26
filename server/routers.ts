@@ -678,7 +678,7 @@ IMPORTANT: This is for clinical decision support only. Always emphasize that a l
       return logs;
     }),
 
-    getAllPatientRecords: adminProcedure
+    getAllPatientRecords: protectedProcedure
       .input(
         z.object({
           limit: z.number().default(100),
@@ -701,7 +701,7 @@ IMPORTANT: This is for clinical decision support only. Always emphasize that a l
         return interactions;
       }),
 
-    getPatientRecordsByUrgency: adminProcedure
+    getPatientRecordsByUrgency: protectedProcedure
       .input(
         z.object({
           urgencyLevel: z.enum(["routine", "moderate", "urgent", "critical"]),
@@ -724,7 +724,7 @@ IMPORTANT: This is for clinical decision support only. Always emphasize that a l
         return interactions;
       }),
 
-    getPatientRecordsByStatus: adminProcedure
+    getPatientRecordsByStatus: protectedProcedure
       .input(
         z.object({
           status: z.enum(["pending", "reviewed", "resolved", "escalated"]),
