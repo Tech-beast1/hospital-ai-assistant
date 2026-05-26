@@ -39,10 +39,18 @@ export default function PatientIntake() {
   // Pre-fill form with voice transcription if available and trigger auto-analysis
   useEffect(() => {
     const voiceTranscription = sessionStorage.getItem("voiceTranscription");
+    const extractedPatientName = sessionStorage.getItem("patientName");
+    
     if (voiceTranscription) {
       const symptomData = [{ name: voiceTranscription, duration: "today", severity: 5 }];
       setSymptoms(symptomData);
       sessionStorage.removeItem("voiceTranscription");
+      
+      // Set the extracted patient name
+      if (extractedPatientName) {
+        setPatientName(extractedPatientName);
+        sessionStorage.removeItem("patientName");
+      }
       
       // Trigger auto-analysis immediately
       setTimeout(() => {

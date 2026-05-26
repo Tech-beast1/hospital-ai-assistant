@@ -187,6 +187,32 @@ export const appRouter = router({
           const transcribedText = (result as any).text || "";
           const detectedLanguage = (result as any).language || "en";
 
+          // Extract patient name from transcribed text using LLM
+          let patientName: string | null = null;
+          try {
+            const nameExtractionPrompt = `Extract the patient's name from the following medical transcription. The patient typically mentions their name at the beginning. Return ONLY the patient's name, or "UNKNOWN" if no name is found.\n\nTranscription: ${transcribedText.substring(0, 500)}`;
+            
+            const nameResponse = await invokeLLM({
+              messages: [
+                {
+                  role: "system",
+                  content: "You are a medical assistant. Extract patient names from medical transcriptions. Return only the name or UNKNOWN.",
+                },
+                {
+                  role: "user",
+                  content: nameExtractionPrompt,
+                },
+              ],
+            });
+
+            const extractedName = (typeof nameResponse.choices?.[0]?.message?.content === 'string' ? nameResponse.choices[0].message.content : "").trim() || "UNKNOWN";
+            if (extractedName && extractedName !== "UNKNOWN") {
+              patientName = extractedName;
+            }
+          } catch (nameError) {
+            console.warn("[Name Extraction] Failed to extract patient name:", nameError);
+          }
+
           await logAuditEvent({
             userId: ctx.user.id,
             action: "TRANSCRIBE_AUDIO",
@@ -194,6 +220,7 @@ export const appRouter = router({
             details: JSON.stringify({
               textLength: transcribedText.length || 0,
               language: detectedLanguage,
+              patientName: patientName || "Not extracted",
             }),
             ipAddress: ctx.req.headers["x-forwarded-for"] || "unknown",
             userAgent: ctx.req.headers["user-agent"],
@@ -204,6 +231,7 @@ export const appRouter = router({
             success: true,
             text: transcribedText,
             language: detectedLanguage,
+            patientName: patientName,
           };
         } catch (error) {
           console.error("Transcription error:", error);

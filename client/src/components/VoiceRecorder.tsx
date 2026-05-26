@@ -6,8 +6,8 @@ import { trpc } from "@/lib/trpc";
 import { toast } from "sonner";
 
 interface VoiceRecorderProps {
-  onTranscriptionComplete: (text: string) => void;
-  onAutoAnalyze?: (text: string) => Promise<void>;
+  onTranscriptionComplete: (text: string, patientName?: string | null) => void;
+  onAutoAnalyze?: (text: string, patientName?: string | null) => Promise<void>;
   isLoading?: boolean;
   autoAnalyze?: boolean;
 }
@@ -26,14 +26,14 @@ export default function VoiceRecorder({ onTranscriptionComplete, onAutoAnalyze, 
   const transcribeMutation = trpc.patient.transcribeAudio.useMutation({
     onSuccess: async (data) => {
       if (data.text) {
-        onTranscriptionComplete(data.text);
+        onTranscriptionComplete(data.text, data.patientName);
         toast.success("Audio transcribed successfully!");
         setAudioBlob(null);
         setRecordingTime(0);
         
         if (autoAnalyze && onAutoAnalyze) {
           try {
-            await onAutoAnalyze(data.text);
+            await onAutoAnalyze(data.text, data.patientName);
           } catch (error) {
             console.error("Auto-analysis error:", error);
             toast.error("Analysis failed. Please try again.");
