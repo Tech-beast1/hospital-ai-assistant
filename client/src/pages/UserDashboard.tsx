@@ -81,6 +81,22 @@ export default function UserDashboard() {
     setInteractions(data);
   }, [dashboardData, statusData, urgencyData, filterStatus, filterUrgency, isLoadingDashboard]);
 
+  const markReviewedMutation = trpc.clinical.markInteractionAsReviewed.useMutation({
+    onSuccess: (updated) => {
+      // Update the interactions list with the updated record
+      setInteractions((prev) =>
+        prev.map((i) => (i.id === updated.id ? updated : i))
+      );
+      // Update selected assessment
+      if (selectedAssessment?.id === updated.id) {
+        setSelectedAssessment(updated);
+      }
+    },
+    onError: (error) => {
+      alert(`Error marking as reviewed: ${error.message}`);
+    },
+  });
+
   const pendingCount = (dashboardData?.interactions || []).filter((i) => i.status === "pending").length;
   const reviewedCount = (dashboardData?.interactions || []).filter((i) => i.status === "reviewed").length;
   const resolvedCount = (dashboardData?.interactions || []).filter((i) => i.status === "resolved").length;
@@ -254,11 +270,13 @@ export default function UserDashboard() {
                         setIsModalOpen(true);
                       }
                     }}
-                    onReview={(id) => {
+                    onReview={async (id) => {
                       const selected = interactions.find((i) => i.id === id);
                       if (selected) {
                         setSelectedAssessment(selected);
                         setIsModalOpen(true);
+                        // Mark as reviewed
+                        await markReviewedMutation.mutateAsync({ interactionId: id });
                       }
                     }}
                   />

@@ -127,11 +127,29 @@ export default function MedicalStaffDashboard() {
     }
   };
 
-  const handleReview = (id: number) => {
+  const markReviewedMutation = trpc.clinical.markInteractionAsReviewed.useMutation({
+    onSuccess: (updated) => {
+      // Update the interactions list with the updated record
+      setInteractions((prev) =>
+        prev.map((i) => (i.id === updated.id ? updated : i))
+      );
+      // Update selected assessment
+      if (selectedAssessment?.id === updated.id) {
+        setSelectedAssessment(updated);
+      }
+    },
+    onError: (error) => {
+      alert(`Error marking as reviewed: ${error.message}`);
+    },
+  });
+
+  const handleReview = async (id: number) => {
     const selected = interactions.find((i) => i.id === id);
     if (selected) {
       setSelectedAssessment(selected);
       setIsModalOpen(true);
+      // Mark as reviewed
+      await markReviewedMutation.mutateAsync({ interactionId: id });
     }
   };
 

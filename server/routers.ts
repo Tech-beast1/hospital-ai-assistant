@@ -741,6 +741,27 @@ IMPORTANT: This is for clinical decision support only. Always emphasize that a l
         return patientData;
       }),
 
+    markInteractionAsReviewed: adminProcedure
+      .input(z.object({ interactionId: z.number() }))
+      .mutation(async ({ ctx, input }) => {
+        const updated = await updatePatientInteraction(input.interactionId, {
+          status: "reviewed",
+        });
+
+        await logAuditEvent({
+          userId: ctx.user.id,
+          action: "MARK_INTERACTION_REVIEWED",
+          resourceType: "patient_interaction",
+          resourceId: input.interactionId,
+          details: JSON.stringify({ newStatus: "reviewed" }),
+          ipAddress: ctx.req.headers["x-forwarded-for"] || "unknown",
+          userAgent: ctx.req.headers["user-agent"],
+          complianceEvent: true,
+        });
+
+        return updated;
+      }),
+
     deleteAllRecords: protectedProcedure
       .mutation(async ({ ctx }) => {
         // Only allow admin users to delete all records
