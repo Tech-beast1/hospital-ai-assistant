@@ -769,7 +769,7 @@ IMPORTANT: This is for clinical decision support only. Always emphasize that a l
         return patientData;
       }),
 
-    markInteractionAsReviewed: adminProcedure
+    markInteractionAsReviewed: protectedProcedure
       .input(z.object({ interactionId: z.number() }))
       .mutation(async ({ ctx, input }) => {
         const updated = await updatePatientInteraction(input.interactionId, {
