@@ -790,15 +790,8 @@ IMPORTANT: This is for clinical decision support only. Always emphasize that a l
         return updated;
       }),
 
-    deleteAllRecords: protectedProcedure
+    deleteAllRecords: adminProcedure
       .mutation(async ({ ctx }) => {
-        // Only allow admin users to delete all records
-        if (ctx.user.role !== "admin") {
-          throw new TRPCError({
-            code: "FORBIDDEN",
-            message: "Only administrators can delete all patient records",
-          });
-        }
 
         try {
           // Delete all patient records

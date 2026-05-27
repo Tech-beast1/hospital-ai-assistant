@@ -86,6 +86,26 @@ vi.mock("./db", () => ({
     updatedAt: new Date(),
   })),
   getPatientDocuments: vi.fn(async () => []),
+  deleteAllPatientRecords: vi.fn(async () => true),
+  getAllPatientRecords: vi.fn(async () => []),
+  getPatientRecordsByUrgency: vi.fn(async () => []),
+  getPatientRecordsByStatus: vi.fn(async () => []),
+  markInteractionAsReviewed: vi.fn(async (id) => ({
+    id,
+    status: "reviewed",
+    updatedAt: new Date(),
+  })),
+  createContactMessage: vi.fn(async (data) => ({
+    id: 1,
+    ...data,
+    createdAt: new Date(),
+  })),
+  getAllContactMessages: vi.fn(async () => []),
+  markContactMessageAsRead: vi.fn(async (id) => ({
+    id,
+    read: true,
+    readAt: new Date(),
+  })),
 }));
 
 // Mock LLM
@@ -476,6 +496,30 @@ describe("Hospital AI Assistant API", () => {
       });
 
       expect(result).toBeDefined();
+    });
+  });
+
+  describe("Admin Access Control", () => {
+    it("should prevent non-admin users from deleting all records", async () => {
+      const ctx = createTestContext(); // Regular user
+      const caller = appRouter.createCaller(ctx);
+
+      try {
+        await caller.clinical.deleteAllRecords();
+        expect.fail("Should have thrown FORBIDDEN error");
+      } catch (error: any) {
+        expect(error.code).toBe("FORBIDDEN");
+      }
+    });
+
+    it("should allow admin users to delete all records", async () => {
+      const ctx = createAdminContext();
+      const caller = appRouter.createCaller(ctx);
+
+      const result = await caller.clinical.deleteAllRecords();
+
+      expect(result).toBeDefined();
+      expect(result.success).toBe(true);
     });
   });
 });

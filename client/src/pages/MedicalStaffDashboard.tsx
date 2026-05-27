@@ -201,14 +201,16 @@ export default function MedicalStaffDashboard() {
               <p className="text-cyan-300 mt-1">Patient Interaction Management & Clinical Review</p>
             </div>
             <div className="flex items-center gap-4">
-              <Button
-                onClick={() => setShowDeleteConfirm(true)}
-                variant="destructive"
-                className="gap-2 bg-red-600 hover:bg-red-700"
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete All Records
-              </Button>
+              {user?.role === "admin" && (
+                <Button
+                  onClick={() => setShowDeleteConfirm(true)}
+                  variant="destructive"
+                  className="gap-2 bg-red-600 hover:bg-red-700"
+                >
+                  <Trash2 className="h-4 w-4" />
+                  Delete All Records
+                </Button>
+              )}
               <Button
                 onClick={() => navigate("/")}
                 variant="ghost"
