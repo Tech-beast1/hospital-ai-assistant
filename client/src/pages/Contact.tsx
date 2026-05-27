@@ -259,7 +259,7 @@ export default function Contact() {
                 <strong className="text-orange-300">Sunday:</strong> Closed
               </p>
               <p className="text-sm text-gray-400 mt-4">
-                For medical emergencies, please call 911 or visit your nearest emergency room immediately.
+                For medical emergencies, please call 112/193 or visit your nearest emergency room immediately.
               </p>
             </div>
           </Card>

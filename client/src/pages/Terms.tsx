@@ -44,7 +44,7 @@ export default function Terms() {
               <div>
                 <p className="text-red-300 font-semibold mb-2">Important Medical Disclaimer</p>
                 <p className="text-sm">
-                  Hospital AI Assistant provides clinical decision support only and is NOT a substitute for professional medical advice. All AI recommendations must be reviewed and approved by a licensed healthcare provider before implementation. In case of medical emergency, call 911 or visit your nearest emergency room immediately.
+                  Hospital AI Assistant provides clinical decision support only and is NOT a substitute for professional medical advice. All AI recommendations must be reviewed and approved by a licensed healthcare provider before implementation. In case of medical emergency, call 112/193 or visit your nearest emergency room immediately.
                 </p>
               </div>
             </div>

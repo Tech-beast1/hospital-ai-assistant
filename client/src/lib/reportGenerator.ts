@@ -244,7 +244,7 @@ export function generatePDFReport(data: AnalysisData): void {
           <p style="margin-top: 10px;">
             This AI analysis is for informational purposes only and does NOT replace professional medical advice. 
             Always consult with a licensed healthcare provider for diagnosis and treatment. 
-            In case of medical emergency, call 911 immediately.
+            In case of medical emergency, call 112/193 immediately.
           </p>
         </div>
         
@@ -344,7 +344,7 @@ function getUrgencyTitle(level: string): string {
 function getUrgencyDescription(level: string): string {
   switch (level) {
     case "critical":
-      return "This requires immediate medical attention. Please seek emergency care or call 911.";
+      return "This requires immediate medical attention. Please seek emergency care or call 112/193.";
     case "urgent":
       return "Please contact your healthcare provider as soon as possible to schedule an evaluation.";
     case "moderate":

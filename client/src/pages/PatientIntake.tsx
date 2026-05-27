@@ -250,7 +250,7 @@ export default function PatientIntake() {
               <div>
                 <h3 className="font-semibold text-orange-300 mb-2">Medical Disclaimer</h3>
                 <p className="text-sm text-gray-300">
-                  This AI assistant provides informational support only and is NOT a substitute for professional medical advice. Always consult with a licensed healthcare provider for diagnosis and treatment. In medical emergencies, call 911 immediately.
+                  This AI assistant provides informational support only and is NOT a substitute for professional medical advice. Always consult with a licensed healthcare provider for diagnosis and treatment. In medical emergencies, call 112/193 immediately.
                 </p>
               </div>
             </div>

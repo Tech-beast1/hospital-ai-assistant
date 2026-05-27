@@ -201,7 +201,7 @@ export default function SymptomResults() {
         <Alert className="mb-6 border-orange-500 bg-orange-50">
           <AlertCircle className="h-4 w-4 text-orange-600" />
           <AlertDescription className="text-orange-900 font-semibold">
-            ⚠️ IMPORTANT MEDICAL DISCLAIMER: This AI analysis is for informational purposes only and does NOT replace professional medical advice. Always consult with a licensed healthcare provider for diagnosis and treatment. In case of medical emergency, call 911 immediately.
+            ⚠️ IMPORTANT MEDICAL DISCLAIMER: This AI analysis is for informational purposes only and does NOT replace professional medical advice. Always consult with a licensed healthcare provider for diagnosis and treatment. In case of medical emergency, call 112/193 immediately.
           </AlertDescription>
         </Alert>
 
@@ -215,7 +215,7 @@ export default function SymptomResults() {
               </h2>
               <p className="text-gray-700 mt-1">
                 {result.analysis.urgencyLevel === "critical"
-                  ? "This requires immediate medical attention. Please seek emergency care or call 911."
+                  ? "This requires immediate medical attention. Please seek emergency care or call 112/193."
                   : result.analysis.urgencyLevel === "urgent"
                   ? "Please contact your healthcare provider as soon as possible to schedule an evaluation."
                   : result.analysis.urgencyLevel === "moderate"

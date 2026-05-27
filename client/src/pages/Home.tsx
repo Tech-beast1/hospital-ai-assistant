@@ -290,7 +290,7 @@ export default function Home() {
                   <p className="text-sm text-gray-300">
                     This AI assistant provides clinical decision support only and is <strong>NOT a substitute for professional medical advice</strong>. 
                     All AI recommendations must be reviewed and approved by a licensed healthcare provider before implementation. 
-                    In case of medical emergency, please call 911 or visit your nearest emergency room immediately. 
+                    In case of medical emergency, please call 112/193 or visit your nearest emergency room immediately. 
                     This system is designed to assist healthcare professionals and should be used as a tool within the clinical workflow, not as a replacement for professional judgment.
                   </p>
                 </div>
