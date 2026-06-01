@@ -169,14 +169,30 @@ export default function PatientIntake() {
   // Camera functions
   const startCamera = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      console.log("Starting camera...");
+      const stream = await navigator.mediaDevices.getUserMedia({ 
+        video: { 
+          facingMode: "user",
+          width: { ideal: 1280 },
+          height: { ideal: 720 }
+        },
+        audio: false
+      });
+      console.log("Stream obtained:", stream);
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
+        videoRef.current.onloadedmetadata = () => {
+          console.log("Video metadata loaded");
+          videoRef.current?.play().catch(e => console.error("Play error:", e));
+        };
         setCameraActive(true);
+        console.log("Camera active set to true");
+      } else {
+        console.error("videoRef.current is null");
       }
     } catch (error) {
       console.error("Error accessing camera:", error);
-      alert("Unable to access camera. Please check permissions.");
+      alert(`Unable to access camera: ${error instanceof Error ? error.message : "Unknown error"}. Please check permissions.`);
     }
   };
 
