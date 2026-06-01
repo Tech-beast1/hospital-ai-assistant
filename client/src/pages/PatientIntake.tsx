@@ -379,15 +379,15 @@ export default function PatientIntake() {
                 disabled={symptoms.length === 0 || !patientName.trim()}
                 className="w-full bg-gradient-to-r from-cyan-500 to-orange-500 hover:from-cyan-600 hover:to-orange-600 text-white"
               >
-                Next: Medical History
+                Next: Past Medical History
               </Button>
             </Card>
           )}
 
-          {/* Step 2: Medical History */}
+          {/* Step 2: Past Medical History */}
           {step === 2 && (
             <Card className="border-cyan-500/30 bg-slate-900/80 backdrop-blur p-6 mb-6">
-              <h2 className="text-2xl font-bold text-white mb-6">Step 2: Medical History</h2>
+              <h2 className="text-2xl font-bold text-white mb-6">Step 2: Past Medical History</h2>
 
               {/* Allergies */}
               <div className="mb-6">
