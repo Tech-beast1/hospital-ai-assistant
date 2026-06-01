@@ -186,7 +186,8 @@ export default function PatientIntake() {
       if (context) {
         canvasRef.current.width = videoRef.current.videoWidth;
         canvasRef.current.height = videoRef.current.videoHeight;
-        context.drawImage(videoRef.current, 0, 0);
+        context.scale(-1, 1);
+        context.drawImage(videoRef.current, -canvasRef.current.width, 0);
         canvasRef.current.toBlob((blob) => {
           if (blob) {
             const file = new File([blob], `symptom-${Date.now()}.jpg`, { type: "image/jpeg" });
@@ -804,7 +805,9 @@ export default function PatientIntake() {
                       ref={videoRef}
                       autoPlay
                       playsInline
-                      className="w-full rounded-lg mb-3"
+                      muted
+                      className="w-full h-80 rounded-lg mb-3 bg-black object-cover"
+                      style={{ transform: "scaleX(-1)" }}
                     />
                     <canvas ref={canvasRef} style={{ display: "none" }} />
                     <div className="flex gap-2">
