@@ -1,11 +1,11 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, AlertCircle, CheckCircle2, Thermometer, Heart } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, Thermometer, Heart, Camera, Upload, X } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Streamdown } from "streamdown";
@@ -37,6 +37,11 @@ export default function PatientIntake() {
     systolic: "",
     diastolic: "",
   });
+  const [symptomPhotos, setSymptomPhotos] = useState<Array<{ file: File; preview: string }>>([]);
+  const [cameraActive, setCameraActive] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const analyzeMutation = trpc.symptoms.analyzeSymptoms.useMutation();
   const updateHistoryMutation = trpc.patient.updateMedicalHistory.useMutation();
@@ -160,6 +165,68 @@ export default function PatientIntake() {
 
     return () => clearInterval(interval);
   }, [isAnalyzing]);
+
+  // Camera functions
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "environment" } });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setCameraActive(true);
+      }
+    } catch (error) {
+      console.error("Error accessing camera:", error);
+      alert("Unable to access camera. Please check permissions.");
+    }
+  };
+
+  const capturePhoto = () => {
+    if (videoRef.current && canvasRef.current) {
+      const context = canvasRef.current.getContext("2d");
+      if (context) {
+        canvasRef.current.width = videoRef.current.videoWidth;
+        canvasRef.current.height = videoRef.current.videoHeight;
+        context.drawImage(videoRef.current, 0, 0);
+        canvasRef.current.toBlob((blob) => {
+          if (blob) {
+            const file = new File([blob], `symptom-${Date.now()}.jpg`, { type: "image/jpeg" });
+            const preview = canvasRef.current!.toDataURL("image/jpeg");
+            setSymptomPhotos([...symptomPhotos, { file, preview }]);
+            stopCamera();
+          }
+        }, "image/jpeg", 0.9);
+      }
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach((track) => track.stop());
+      setCameraActive(false);
+    }
+  };
+
+  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files;
+    if (files) {
+      Array.from(files).forEach((file) => {
+        if (file.type.startsWith("image/")) {
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            const preview = event.target?.result as string;
+            setSymptomPhotos([...symptomPhotos, { file, preview }]);
+          };
+          reader.readAsDataURL(file);
+        }
+      });
+    }
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  };
+
+  const removePhoto = (index: number) => {
+    setSymptomPhotos(symptomPhotos.filter((_, i) => i !== index));
+  };
 
   const handleCancel = () => {
     if (abortController) {
@@ -720,6 +787,92 @@ export default function PatientIntake() {
                 <p className="text-sm text-blue-200">
                   💡 Tip: If you don't have access to a thermometer or blood pressure monitor, you can skip these fields and continue with the analysis.
                 </p>
+              </div>
+
+              {/* Symptom Photos */}
+              <div className="mb-6">
+                <label className="block text-cyan-300 font-semibold mb-2">
+                  <Camera className="h-4 w-4 inline mr-2" />
+                  Symptom Photos (Optional)
+                </label>
+                <p className="text-sm text-gray-400 mb-3">Upload or capture photos of your symptoms to help with diagnosis</p>
+                
+                {/* Camera Preview */}
+                {cameraActive && (
+                  <div className="mb-4 bg-slate-800 rounded-lg p-4">
+                    <video
+                      ref={videoRef}
+                      autoPlay
+                      playsInline
+                      className="w-full rounded-lg mb-3"
+                    />
+                    <canvas ref={canvasRef} style={{ display: "none" }} />
+                    <div className="flex gap-2">
+                      <Button
+                        onClick={capturePhoto}
+                        className="flex-1 bg-green-500 hover:bg-green-600 text-white"
+                      >
+                        Capture Photo
+                      </Button>
+                      <Button
+                        onClick={stopCamera}
+                        variant="outline"
+                        className="flex-1 border-red-500 text-red-400 hover:bg-red-500/10"
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                )}
+
+                {/* Upload/Camera Buttons */}
+                {!cameraActive && (
+                  <div className="flex gap-2 mb-4">
+                    <Button
+                      onClick={startCamera}
+                      className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white flex items-center justify-center gap-2"
+                    >
+                      <Camera className="h-4 w-4" />
+                      Take Photo
+                    </Button>
+                    <Button
+                      onClick={() => fileInputRef.current?.click()}
+                      className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white flex items-center justify-center gap-2"
+                    >
+                      <Upload className="h-4 w-4" />
+                      Upload Photo
+                    </Button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      multiple
+                      accept="image/*"
+                      onChange={handleFileUpload}
+                      className="hidden"
+                    />
+                  </div>
+                )}
+
+                {/* Photo Gallery */}
+                {symptomPhotos.length > 0 && (
+                  <div className="grid grid-cols-2 gap-3">
+                    {symptomPhotos.map((photo, idx) => (
+                      <div key={idx} className="relative bg-slate-800 rounded-lg overflow-hidden">
+                        <img
+                          src={photo.preview}
+                          alt={`Symptom ${idx + 1}`}
+                          className="w-full h-32 object-cover"
+                        />
+                        <button
+                          onClick={() => removePhoto(idx)}
+                          className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 rounded-full p-1"
+                        >
+                          <X className="h-4 w-4 text-white" />
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Language Selection */}
