@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
-import { Loader2, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Loader2, AlertCircle, CheckCircle2, Thermometer, Heart } from "lucide-react";
 import { trpc } from "@/lib/trpc";
 import { useLocation } from "wouter";
 import { Streamdown } from "streamdown";
@@ -32,6 +32,11 @@ export default function PatientIntake() {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [elapsedSeconds, setElapsedSeconds] = useState(0);
   const [abortController, setAbortController] = useState<AbortController | null>(null);
+  const [vitalSigns, setVitalSigns] = useState({
+    temperature: "",
+    systolic: "",
+    diastolic: "",
+  });
 
   const analyzeMutation = trpc.symptoms.analyzeSymptoms.useMutation();
   const updateHistoryMutation = trpc.patient.updateMedicalHistory.useMutation();
@@ -77,6 +82,7 @@ export default function PatientIntake() {
         medicalHistory,
         language,
         patientName: patientName || "Patient",
+        vitalSigns,
       });
 
       // Store the analysis data
@@ -186,6 +192,7 @@ export default function PatientIntake() {
         medicalHistory,
         language,
         patientName,
+        vitalSigns,
       });
 
       // Store the analysis data in sessionStorage so the results page can access it
@@ -413,7 +420,7 @@ export default function PatientIntake() {
                     {medicalHistory.allergies.map((allergy, idx) => (
                       <div
                         key={idx}
-                        className="bg-red-500/20 text-red-300 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                        className="bg-slate-700/50 px-3 py-1 rounded-full text-sm text-cyan-300 flex items-center gap-2"
                       >
                         {allergy}
                         <button
@@ -425,7 +432,7 @@ export default function PatientIntake() {
                               ),
                             })
                           }
-                          className="hover:text-red-200"
+                          className="text-red-400 hover:text-red-300"
                         >
                           ×
                         </button>
@@ -459,7 +466,7 @@ export default function PatientIntake() {
                     {medicalHistory.chronicConditions.map((condition, idx) => (
                       <div
                         key={idx}
-                        className="bg-yellow-500/20 text-yellow-300 px-3 py-1 rounded-full text-sm flex items-center gap-2"
+                        className="bg-slate-700/50 px-3 py-1 rounded-full text-sm text-cyan-300 flex items-center gap-2"
                       >
                         {condition}
                         <button
@@ -472,7 +479,54 @@ export default function PatientIntake() {
                                 ),
                             })
                           }
-                          className="hover:text-yellow-200"
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Surgical History */}
+              <div className="mb-6">
+                <label className="block text-cyan-300 font-semibold mb-2">
+                  Surgical History
+                </label>
+                <div className="flex gap-2 mb-3">
+                  <Input
+                    placeholder="e.g., Appendectomy, Knee surgery"
+                    value={newSurgery}
+                    onChange={(e) => setNewSurgery(e.target.value)}
+                    className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500"
+                  />
+                  <Button
+                    onClick={handleAddSurgery}
+                    className="bg-cyan-500 hover:bg-cyan-600"
+                  >
+                    Add
+                  </Button>
+                </div>
+                {medicalHistory.surgicalHistory.length > 0 && (
+                  <div className="flex flex-wrap gap-2">
+                    {medicalHistory.surgicalHistory.map((surgery, idx) => (
+                      <div
+                        key={idx}
+                        className="bg-slate-700/50 px-3 py-1 rounded-full text-sm text-cyan-300 flex items-center gap-2"
+                      >
+                        {surgery}
+                        <button
+                          onClick={() =>
+                            setMedicalHistory({
+                              ...medicalHistory,
+                              surgicalHistory:
+                                medicalHistory.surgicalHistory.filter(
+                                  (_, i) => i !== idx
+                                ),
+                            })
+                          }
+                          className="text-red-400 hover:text-red-300"
                         >
                           ×
                         </button>
@@ -487,7 +541,7 @@ export default function PatientIntake() {
                 <label className="block text-cyan-300 font-semibold mb-2">
                   Current Medications
                 </label>
-                <div className="space-y-2 mb-3">
+                <div className="space-y-3">
                   <Input
                     placeholder="Medication name"
                     value={currentMedication.name}
@@ -582,6 +636,92 @@ export default function PatientIntake() {
                 />
               </div>
 
+              <div className="flex gap-4">
+                <Button
+                  onClick={() => setStep(1)}
+                  variant="outline"
+                  className="flex-1 border-cyan-500 text-cyan-300 hover:bg-cyan-500/10"
+                >
+                  Back
+                </Button>
+                <Button
+                  onClick={() => setStep(3)}
+                  className="flex-1 bg-gradient-to-r from-cyan-500 to-orange-500 hover:from-cyan-600 hover:to-orange-600 text-white"
+                >
+                  Next: Vital Signs
+                </Button>
+              </div>
+            </Card>
+          )}
+
+          {/* Step 3: Vital Signs */}
+          {step === 3 && (
+            <Card className="border-cyan-500/30 bg-slate-900/80 backdrop-blur p-6 mb-6">
+              <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
+                <Thermometer className="h-6 w-6 text-orange-400" />
+                <Heart className="h-6 w-6 text-red-400" />
+                Step 3: Vital Signs
+              </h2>
+              <p className="text-gray-300 mb-6">Please provide your current vital signs for more accurate analysis. (Optional)</p>
+
+              {/* Temperature */}
+              <div className="mb-6">
+                <label className="block text-cyan-300 font-semibold mb-2">
+                  Temperature (°C or °F)
+                </label>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="e.g., 37.5 or 98.6"
+                    value={vitalSigns.temperature}
+                    onChange={(e) =>
+                      setVitalSigns({ ...vitalSigns, temperature: e.target.value })
+                    }
+                    className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500 flex-1"
+                    step="0.1"
+                  />
+                  <span className="text-gray-400 flex items-center px-3 bg-slate-800 border border-cyan-500/30 rounded">°</span>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">Normal: 36.5-37.5°C (97.7-99.5°F)</p>
+              </div>
+
+              {/* Blood Pressure */}
+              <div className="mb-6">
+                <label className="block text-cyan-300 font-semibold mb-2">
+                  Blood Pressure (Systolic/Diastolic)
+                </label>
+                <div className="flex gap-2 items-center">
+                  <Input
+                    type="number"
+                    placeholder="Systolic (e.g., 120)"
+                    value={vitalSigns.systolic}
+                    onChange={(e) =>
+                      setVitalSigns({ ...vitalSigns, systolic: e.target.value })
+                    }
+                    className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500 flex-1"
+                  />
+                  <span className="text-cyan-300 font-semibold">/</span>
+                  <Input
+                    type="number"
+                    placeholder="Diastolic (e.g., 80)"
+                    value={vitalSigns.diastolic}
+                    onChange={(e) =>
+                      setVitalSigns({ ...vitalSigns, diastolic: e.target.value })
+                    }
+                    className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500 flex-1"
+                  />
+                  <span className="text-gray-400 flex items-center px-3 bg-slate-800 border border-cyan-500/30 rounded">mmHg</span>
+                </div>
+                <p className="text-xs text-gray-400 mt-1">Normal: 120/80 mmHg</p>
+              </div>
+
+              {/* Optional note */}
+              <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-6">
+                <p className="text-sm text-blue-200">
+                  💡 Tip: If you don't have access to a thermometer or blood pressure monitor, you can skip these fields and continue with the analysis.
+                </p>
+              </div>
+
               {/* Language Selection */}
               <div className="mb-6">
                 <label className="block text-cyan-300 font-semibold mb-2">
@@ -603,7 +743,7 @@ export default function PatientIntake() {
 
               <div className="flex gap-4">
                 <Button
-                  onClick={() => setStep(1)}
+                  onClick={() => setStep(2)}
                   variant="outline"
                   className="flex-1 border-cyan-500 text-cyan-300 hover:bg-cyan-500/10"
                 >

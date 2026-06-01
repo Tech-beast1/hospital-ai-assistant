@@ -65,12 +65,19 @@ const medicalHistorySchema = z.object({
     .optional(),
 });
 
+const vitalSignsSchema = z.object({
+  temperature: z.string().optional(),
+  systolic: z.string().optional(),
+  diastolic: z.string().optional(),
+});
+
 const symptomReportSchema = z.object({
   symptoms: z.array(symptomSchema),
   symptomDuration: z.string(),
   medicalHistory: medicalHistorySchema,
   language: z.string().default("en"),
   patientName: z.string().optional(),
+  vitalSigns: vitalSignsSchema.optional(),
 });
 
 // Admin procedure for role-based access
