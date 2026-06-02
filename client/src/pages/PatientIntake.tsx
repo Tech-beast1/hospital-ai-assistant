@@ -163,18 +163,26 @@ export default function PatientIntake() {
       const stream = await navigator.mediaDevices.getUserMedia(constraints);
       console.log("Stream obtained:", stream);
       
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
-        setCameraActive(true);
-        console.log("Camera active set to true");
-        
-        // Ensure video plays
-        videoRef.current.play().catch(e => {
-          console.error("Play error:", e);
-        });
-      } else {
+      if (!videoRef.current) {
         console.error("videoRef.current is null");
+        return;
       }
+      
+      // Set the stream to the video element
+      videoRef.current.srcObject = stream;
+      console.log("Stream set to video element");
+      
+      // Set camera active state
+      setCameraActive(true);
+      
+      // Wait a bit for the video element to render, then play
+      setTimeout(() => {
+        if (videoRef.current) {
+          videoRef.current.play()
+            .then(() => console.log("Video playing successfully"))
+            .catch(e => console.error("Play error:", e));
+        }
+      }, 50)
     } catch (error) {
       console.error("Error accessing camera:", error);
       const errorMsg = error instanceof Error ? error.message : "Unknown error";
