@@ -175,20 +175,29 @@ export default function PatientIntake() {
       // Set camera active state
       setCameraActive(true);
       
-      // For Android/mobile compatibility, use onloadedmetadata
-      videoRef.current.onloadedmetadata = () => {
-        console.log("Video metadata loaded");
-        if (videoRef.current) {
-          videoRef.current.play()
-            .then(() => console.log("Video playing successfully"))
-            .catch(e => console.error("Play error:", e));
-        }
-      };
-      
-      // Fallback: try playing immediately
-      videoRef.current.play()
-        .then(() => console.log("Immediate play successful"))
-        .catch(e => console.log("Immediate play failed (expected):", e))
+      // Try to play the video and render to canvas
+      const playPromise = videoRef.current.play();
+      if (playPromise !== undefined) {
+        playPromise
+          .then(() => {
+            console.log("Video playing successfully");
+            // Start rendering to canvas
+            const renderFrame = () => {
+              if (canvasRef.current && videoRef.current && cameraActive) {
+                const ctx = canvasRef.current.getContext('2d');
+                if (ctx) {
+                  canvasRef.current.width = videoRef.current.videoWidth || 640;
+                  canvasRef.current.height = videoRef.current.videoHeight || 480;
+                  ctx.scale(-1, 1);
+                  ctx.drawImage(videoRef.current, -canvasRef.current.width, 0);
+                  requestAnimationFrame(renderFrame);
+                }
+              }
+            };
+            renderFrame();
+          })
+          .catch(e => console.error("Play error:", e));
+      }
     } catch (error) {
       console.error("Error accessing camera:", error);
       const errorMsg = error instanceof Error ? error.message : "Unknown error";
@@ -694,7 +703,19 @@ export default function PatientIntake() {
                       WebkitTransform: "scaleX(-1)"
                     }}
                   />
-                  <canvas ref={canvasRef} style={{ display: "none" }} />
+                  <canvas 
+                    ref={canvasRef} 
+                    style={{ 
+                      width: "100%",
+                      height: "400px",
+                      backgroundColor: "#000",
+                      borderRadius: "0.5rem",
+                      marginBottom: "0.75rem",
+                      transform: "scaleX(-1)",
+                      objectFit: "cover",
+                      display: "block"
+                    }} 
+                  />
                   <div className="flex gap-2">
                     <Button
                       onClick={capturePhoto}
