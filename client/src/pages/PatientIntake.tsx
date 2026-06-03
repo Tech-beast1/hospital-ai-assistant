@@ -175,14 +175,20 @@ export default function PatientIntake() {
       // Set camera active state
       setCameraActive(true);
       
-      // Wait a bit for the video element to render, then play
-      setTimeout(() => {
+      // For Android/mobile compatibility, use onloadedmetadata
+      videoRef.current.onloadedmetadata = () => {
+        console.log("Video metadata loaded");
         if (videoRef.current) {
           videoRef.current.play()
             .then(() => console.log("Video playing successfully"))
             .catch(e => console.error("Play error:", e));
         }
-      }, 50)
+      };
+      
+      // Fallback: try playing immediately
+      videoRef.current.play()
+        .then(() => console.log("Immediate play successful"))
+        .catch(e => console.log("Immediate play failed (expected):", e))
     } catch (error) {
       console.error("Error accessing camera:", error);
       const errorMsg = error instanceof Error ? error.message : "Unknown error";
@@ -675,6 +681,7 @@ export default function PatientIntake() {
                     autoPlay
                     playsInline
                     muted
+                    webkit-playsinline
                     style={{
                       width: "100%",
                       height: "400px",
@@ -683,7 +690,8 @@ export default function PatientIntake() {
                       marginBottom: "0.75rem",
                       transform: "scaleX(-1)",
                       objectFit: "cover",
-                      display: "block"
+                      display: "block",
+                      WebkitTransform: "scaleX(-1)"
                     }}
                   />
                   <canvas ref={canvasRef} style={{ display: "none" }} />
