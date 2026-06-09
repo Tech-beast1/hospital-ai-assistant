@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -38,198 +38,52 @@ export default function PatientIntake() {
     diastolic: "",
   });
   const [symptomPhotos, setSymptomPhotos] = useState<Array<{ file: File; preview: string }>>([]);
-  const [cameraActive, setCameraActive] = useState(false);
-  const videoRef = useRef<HTMLVideoElement>(null);
-  const canvasRef = useRef<HTMLCanvasElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const cameraInputRef = useRef<HTMLInputElement>(null);
 
   const analyzeMutation = trpc.symptoms.analyzeSymptoms.useMutation();
   const updateHistoryMutation = trpc.patient.updateMedicalHistory.useMutation();
 
   // Pre-fill form with voice transcription if available and trigger auto-analysis
   useEffect(() => {
-    const voiceTranscription = sessionStorage.getItem("voiceTranscription");
-    const extractedPatientName = sessionStorage.getItem("patientName");
-    
-    if (voiceTranscription) {
-      const symptomData = [{ name: voiceTranscription, duration: "today", severity: 5 }];
-      setSymptoms(symptomData);
-      setStep(2);
-      sessionStorage.removeItem("voiceTranscription");
-    }
-
-    if (extractedPatientName) {
-      setPatientName(extractedPatientName);
-      sessionStorage.removeItem("patientName");
+    const transcribedText = sessionStorage.getItem("transcribedText");
+    if (transcribedText) {
+      sessionStorage.removeItem("transcribedText");
     }
   }, []);
 
-  const handleAddSymptom = () => {
-    if (currentSymptom.name.trim()) {
-      setSymptoms([...symptoms, currentSymptom]);
-      setCurrentSymptom({ name: "", duration: "", severity: 5 });
-    }
-  };
-
-  const handleRemoveSymptom = (index: number) => {
-    setSymptoms(symptoms.filter((_, i) => i !== index));
-  };
-
-  const handleAddMedication = () => {
-    if (currentMedication.name.trim()) {
-      setMedicalHistory({
-        ...medicalHistory,
-        currentMedications: [...medicalHistory.currentMedications, currentMedication],
-      });
-      setCurrentMedication({ name: "", dosage: "", frequency: "" });
-    }
-  };
-
-  const handleRemoveMedication = (index: number) => {
-    setMedicalHistory({
-      ...medicalHistory,
-      currentMedications: medicalHistory.currentMedications.filter((_, i) => i !== index),
-    });
-  };
-
-  const handleAddAllergy = () => {
-    if (newAllergy.trim()) {
-      setMedicalHistory({
-        ...medicalHistory,
-        allergies: [...medicalHistory.allergies, newAllergy],
-      });
-      setNewAllergy("");
-    }
-  };
-
-  const handleRemoveAllergy = (index: number) => {
-    setMedicalHistory({
-      ...medicalHistory,
-      allergies: medicalHistory.allergies.filter((_, i) => i !== index),
-    });
-  };
-
-  const handleAddCondition = () => {
-    if (newCondition.trim()) {
-      setMedicalHistory({
-        ...medicalHistory,
-        chronicConditions: [...medicalHistory.chronicConditions, newCondition],
-      });
-      setNewCondition("");
-    }
-  };
-
-  const handleRemoveCondition = (index: number) => {
-    setMedicalHistory({
-      ...medicalHistory,
-      chronicConditions: medicalHistory.chronicConditions.filter((_, i) => i !== index),
-    });
-  };
-
-  const handleAddSurgery = () => {
-    if (newSurgery.trim()) {
-      setMedicalHistory({
-        ...medicalHistory,
-        surgicalHistory: [...medicalHistory.surgicalHistory, newSurgery],
-      });
-      setNewSurgery("");
-    }
-  };
-
-  // Timer for elapsed seconds
+  // Timer for analysis
   useEffect(() => {
-    if (!isAnalyzing) return;
-
-    const interval = setInterval(() => {
-      setElapsedSeconds((prev) => prev + 1);
-    }, 1000);
+    let interval: NodeJS.Timeout;
+    if (isAnalyzing) {
+      interval = setInterval(() => {
+        setElapsedSeconds((prev) => prev + 1);
+      }, 1000);
+    }
 
     return () => clearInterval(interval);
   }, [isAnalyzing]);
 
-  // Camera functions
-  const startCamera = async () => {
-    try {
-      console.log("Starting camera...");
-      const constraints = {
-        video: {
-          facingMode: "user",
-          width: { ideal: 1280 },
-          height: { ideal: 720 }
-        },
-        audio: false
+  // Camera functions - use native file input with camera capture
+  const startCamera = () => {
+    // Trigger native camera input
+    if (cameraInputRef.current) {
+      cameraInputRef.current.click();
+    }
+  };
+
+  const handleCameraCapture = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        const preview = event.target?.result as string;
+        setSymptomPhotos([...symptomPhotos, { file, preview }]);
+        console.log("Photo captured:", file.name);
       };
-      
-      const stream = await navigator.mediaDevices.getUserMedia(constraints);
-      console.log("Stream obtained:", stream);
-      
-      if (!videoRef.current) {
-        console.error("videoRef.current is null");
-        return;
-      }
-      
-      // Set the stream to the video element
-      videoRef.current.srcObject = stream;
-      console.log("Stream set to video element");
-      
-      // Set camera active state
-      setCameraActive(true);
-      
-      // Try to play the video and render to canvas
-      const playPromise = videoRef.current.play();
-      if (playPromise !== undefined) {
-        playPromise
-          .then(() => {
-            console.log("Video playing successfully");
-            // Start rendering to canvas
-            const renderFrame = () => {
-              if (canvasRef.current && videoRef.current && cameraActive) {
-                const ctx = canvasRef.current.getContext('2d');
-                if (ctx) {
-                  canvasRef.current.width = videoRef.current.videoWidth || 640;
-                  canvasRef.current.height = videoRef.current.videoHeight || 480;
-                  ctx.scale(-1, 1);
-                  ctx.drawImage(videoRef.current, -canvasRef.current.width, 0);
-                  requestAnimationFrame(renderFrame);
-                }
-              }
-            };
-            renderFrame();
-          })
-          .catch(e => console.error("Play error:", e));
-      }
-    } catch (error) {
-      console.error("Error accessing camera:", error);
-      const errorMsg = error instanceof Error ? error.message : "Unknown error";
-      alert(`Unable to access camera: ${errorMsg}. Please check permissions.`);
-    }
-  };
-
-  const capturePhoto = () => {
-    if (videoRef.current && canvasRef.current) {
-      const context = canvasRef.current.getContext("2d");
-      if (context) {
-        canvasRef.current.width = videoRef.current.videoWidth;
-        canvasRef.current.height = videoRef.current.videoHeight;
-        context.scale(-1, 1);
-        context.drawImage(videoRef.current, -canvasRef.current.width, 0);
-        canvasRef.current.toBlob((blob) => {
-          if (blob) {
-            const file = new File([blob], `symptom-${Date.now()}.jpg`, { type: "image/jpeg" });
-            const preview = canvasRef.current!.toDataURL("image/jpeg");
-            setSymptomPhotos([...symptomPhotos, { file, preview }]);
-            stopCamera();
-          }
-        }, "image/jpeg", 0.9);
-      }
-    }
-  };
-
-  const stopCamera = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach((track) => track.stop());
-      setCameraActive(false);
+      reader.readAsDataURL(file);
+      // Reset input so same file can be selected again
+      e.target.value = "";
     }
   };
 
@@ -237,32 +91,112 @@ export default function PatientIntake() {
     const files = e.target.files;
     if (files) {
       Array.from(files).forEach((file) => {
-        if (file.type.startsWith("image/")) {
-          const reader = new FileReader();
-          reader.onload = (event) => {
-            const preview = event.target?.result as string;
-            setSymptomPhotos([...symptomPhotos, { file, preview }]);
-          };
-          reader.readAsDataURL(file);
-        }
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          const preview = event.target?.result as string;
+          setSymptomPhotos((prev) => [...prev, { file, preview }]);
+        };
+        reader.readAsDataURL(file);
       });
     }
-    if (fileInputRef.current) fileInputRef.current.value = "";
+    // Reset input
+    e.target.value = "";
   };
 
   const removePhoto = (index: number) => {
-    setSymptomPhotos(symptomPhotos.filter((_, i) => i !== index));
+    setSymptomPhotos((prev) => prev.filter((_, i) => i !== index));
   };
 
-  const handleCancel = () => {
-    if (abortController) {
-      abortController.abort();
+  // Add symptom
+  const addSymptom = () => {
+    if (currentSymptom.name.trim()) {
+      setSymptoms([...symptoms, currentSymptom]);
+      setCurrentSymptom({ name: "", duration: "", severity: 5 });
     }
-    setIsAnalyzing(false);
-    setElapsedSeconds(0);
-    setAbortController(null);
   };
 
+  // Remove symptom
+  const removeSymptom = (index: number) => {
+    setSymptoms(symptoms.filter((_, i) => i !== index));
+  };
+
+  // Add allergy
+  const addAllergy = () => {
+    if (newAllergy.trim()) {
+      setMedicalHistory({
+        ...medicalHistory,
+        allergies: [...(medicalHistory.allergies || []), newAllergy],
+      });
+      setNewAllergy("");
+    }
+  };
+
+  // Remove allergy
+  const removeAllergy = (index: number) => {
+    setMedicalHistory({
+      ...medicalHistory,
+      allergies: medicalHistory.allergies?.filter((_, i) => i !== index) || [],
+    });
+  };
+
+  // Add chronic condition
+  const addCondition = () => {
+    if (newCondition.trim()) {
+      setMedicalHistory({
+        ...medicalHistory,
+        chronicConditions: [...(medicalHistory.chronicConditions || []), newCondition],
+      });
+      setNewCondition("");
+    }
+  };
+
+  // Remove chronic condition
+  const removeCondition = (index: number) => {
+    setMedicalHistory({
+      ...medicalHistory,
+      chronicConditions: medicalHistory.chronicConditions?.filter((_, i) => i !== index) || [],
+    });
+  };
+
+  // Add surgical history
+  const addSurgery = () => {
+    if (newSurgery.trim()) {
+      setMedicalHistory({
+        ...medicalHistory,
+        surgicalHistory: [...(medicalHistory.surgicalHistory || []), newSurgery],
+      });
+      setNewSurgery("");
+    }
+  };
+
+  // Remove surgical history
+  const removeSurgery = (index: number) => {
+    setMedicalHistory({
+      ...medicalHistory,
+      surgicalHistory: medicalHistory.surgicalHistory?.filter((_, i) => i !== index) || [],
+    });
+  };
+
+  // Add medication
+  const addMedication = () => {
+    if (currentMedication.name.trim()) {
+      setMedicalHistory({
+        ...medicalHistory,
+        currentMedications: [...(medicalHistory.currentMedications || []), currentMedication],
+      });
+      setCurrentMedication({ name: "", dosage: "", frequency: "" });
+    }
+  };
+
+  // Remove medication
+  const removeMedication = (index: number) => {
+    setMedicalHistory({
+      ...medicalHistory,
+      currentMedications: medicalHistory.currentMedications?.filter((_, i) => i !== index) || [],
+    });
+  };
+
+  // Handle form submission
   const handleSubmit = async () => {
     if (symptoms.length === 0) {
       alert("Please add at least one symptom");
@@ -272,188 +206,159 @@ export default function PatientIntake() {
     setIsAnalyzing(true);
     setElapsedSeconds(0);
 
-    const controller = new AbortController();
-    setAbortController(controller);
-
     try {
-      const response = await analyzeMutation.mutateAsync({
+      const result = await analyzeMutation.mutateAsync({
         symptoms,
-        symptomDuration: "recent",
-        medicalHistory: {
-          allergies: medicalHistory.allergies,
-          chronicConditions: medicalHistory.chronicConditions,
-          surgicalHistory: medicalHistory.surgicalHistory,
-          familyHistory: medicalHistory.familyHistory,
-          currentMedications: medicalHistory.currentMedications,
-        },
+        symptomDuration: "varies",
+        medicalHistory,
         language,
-        patientName,
-        vitalSigns: {
-          temperature: vitalSigns.temperature || undefined,
-          systolic: vitalSigns.systolic || undefined,
-          diastolic: vitalSigns.diastolic || undefined,
-        },
+        patientName: patientName || "Anonymous",
+        vitalSigns,
       });
 
-      if (patientName) {
-        await updateHistoryMutation.mutateAsync({
-          allergies: medicalHistory.allergies,
-          chronicConditions: medicalHistory.chronicConditions,
-          surgicalHistory: medicalHistory.surgicalHistory,
-          familyHistory: medicalHistory.familyHistory,
-          currentMedications: medicalHistory.currentMedications,
-        });
-      }
+      // Store result in sessionStorage for the results page
+      sessionStorage.setItem(`analysis_${result.interactionId}`, JSON.stringify(result));
 
-      sessionStorage.setItem("analysisResult", JSON.stringify(response));
-      setLocation("/symptom-results");
+      // Navigate to results page
+      setLocation(`/results/${result.interactionId}`);
     } catch (error) {
-      console.error("Error analyzing symptoms:", error);
-      if (error instanceof Error && error.message !== "The operation was aborted") {
-        alert("Error analyzing symptoms. Please try again.");
-      }
+      console.error("Analysis error:", error);
+      alert("Failed to analyze symptoms. Please try again.");
     } finally {
       setIsAnalyzing(false);
-      setAbortController(null);
     }
   };
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-950 via-slate-900 to-slate-800 p-4 md:p-8">
-      <div className="max-w-2xl mx-auto">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-white mb-2">Patient Assessment</h1>
-          <p className="text-gray-400">Step {step} of 3</p>
-        </div>
+  // Render different steps
+  const renderStep = () => {
+    switch (step) {
+      case 1:
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-white mb-4">Patient Information</h2>
 
-        {/* Step 1: Symptoms */}
-        {step === 1 && (
-          <Card className="border-cyan-500/30 bg-slate-900/80 backdrop-blur p-6 mb-6">
-            <h2 className="text-2xl font-bold text-white mb-6">Step 1: Symptoms</h2>
-
-            {/* Patient Name */}
-            <div className="mb-6">
-              <label className="block text-cyan-300 font-semibold mb-2">Patient Name (Optional)</label>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Patient Name (Optional)</label>
               <Input
                 type="text"
-                placeholder="Enter patient name"
                 value={patientName}
                 onChange={(e) => setPatientName(e.target.value)}
-                className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500"
+                placeholder="Enter patient name"
+                className="bg-slate-800 border-slate-700 text-white"
               />
             </div>
 
-            {/* Add Symptom */}
-            <div className="mb-6 p-4 bg-slate-800/50 rounded-lg border border-cyan-500/20">
-              <h3 className="text-cyan-300 font-semibold mb-4">Add a Symptom</h3>
-              <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Language</label>
+              <Select value={language} onValueChange={setLanguage}>
+                <SelectTrigger className="bg-slate-800 border-slate-700 text-white">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="es">Spanish</SelectItem>
+                  <SelectItem value="fr">French</SelectItem>
+                  <SelectItem value="de">German</SelectItem>
+                  <SelectItem value="pt">Portuguese</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Symptoms</label>
+              <div className="space-y-3">
                 <div>
-                  <label className="block text-sm text-gray-300 mb-2">Symptom Name</label>
                   <Input
                     type="text"
-                    placeholder="e.g., Headache, Cough, Fever"
                     value={currentSymptom.name}
                     onChange={(e) => setCurrentSymptom({ ...currentSymptom, name: e.target.value })}
-                    className="bg-slate-700 border-cyan-500/30 text-white placeholder-gray-500"
+                    placeholder="e.g., Headache, Fever, Cough"
+                    className="bg-slate-800 border-slate-700 text-white mb-2"
                   />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-300 mb-2">Duration</label>
-                  <Input
-                    type="text"
-                    placeholder="e.g., 2 days, 1 week"
-                    value={currentSymptom.duration}
-                    onChange={(e) => setCurrentSymptom({ ...currentSymptom, duration: e.target.value })}
-                    className="bg-slate-700 border-cyan-500/30 text-white placeholder-gray-500"
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm text-gray-300 mb-2">Severity (1-10)</label>
-                  <Input
-                    type="range"
-                    min="1"
-                    max="10"
-                    value={currentSymptom.severity}
-                    onChange={(e) => setCurrentSymptom({ ...currentSymptom, severity: parseInt(e.target.value) })}
-                    className="w-full"
-                  />
-                  <div className="text-center text-cyan-300 font-semibold mt-2">{currentSymptom.severity}/10</div>
-                </div>
-                <Button
-                  onClick={handleAddSymptom}
-                  className="w-full bg-gradient-to-r from-cyan-500 to-orange-500 hover:from-cyan-600 hover:to-orange-600 text-white"
-                >
-                  Add Symptom
-                </Button>
-              </div>
-            </div>
-
-            {/* Symptoms List */}
-            {symptoms.length > 0 && (
-              <div className="mb-6">
-                <h3 className="text-cyan-300 font-semibold mb-3">Your Symptoms</h3>
-                <div className="space-y-2">
-                  {symptoms.map((symptom, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-slate-800 p-3 rounded-lg border border-cyan-500/20">
-                      <div>
-                        <p className="text-white font-medium">{symptom.name}</p>
-                        <p className="text-sm text-gray-400">Duration: {symptom.duration} | Severity: {symptom.severity}/10</p>
-                      </div>
-                      <Button
-                        onClick={() => handleRemoveSymptom(idx)}
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-400 hover:bg-red-500/10"
-                      >
-                        Remove
-                      </Button>
+                  <div className="grid grid-cols-2 gap-2 mb-2">
+                    <Input
+                      type="text"
+                      value={currentSymptom.duration}
+                      onChange={(e) => setCurrentSymptom({ ...currentSymptom, duration: e.target.value })}
+                      placeholder="e.g., 2 days, 1 week"
+                      className="bg-slate-800 border-slate-700 text-white"
+                    />
+                    <div>
+                      <label className="text-xs text-gray-400">Severity: {currentSymptom.severity}/10</label>
+                      <input
+                        type="range"
+                        min="1"
+                        max="10"
+                        value={currentSymptom.severity}
+                        onChange={(e) => setCurrentSymptom({ ...currentSymptom, severity: parseInt(e.target.value) })}
+                        className="w-full"
+                      />
                     </div>
-                  ))}
+                  </div>
+                  <Button onClick={addSymptom} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">
+                    Add Symptom
+                  </Button>
                 </div>
+
+                {symptoms.length > 0 && (
+                  <div className="bg-slate-800/50 rounded-lg p-3 space-y-2">
+                    {symptoms.map((symptom, idx) => (
+                      <div key={idx} className="flex justify-between items-center bg-slate-700/50 p-2 rounded">
+                        <span className="text-gray-300">
+                          {symptom.name} ({symptom.duration}, severity {symptom.severity}/10)
+                        </span>
+                        <Button
+                          onClick={() => removeSymptom(idx)}
+                          variant="ghost"
+                          size="sm"
+                          className="text-red-400 hover:text-red-300"
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </div>
-            )}
-
-            <div className="flex gap-4">
-              <Button
-                onClick={() => setStep(2)}
-                className="flex-1 bg-gradient-to-r from-cyan-500 to-orange-500 hover:from-cyan-600 hover:to-orange-600 text-white"
-                disabled={symptoms.length === 0}
-              >
-                Next: Medical History
-              </Button>
             </div>
-          </Card>
-        )}
 
-        {/* Step 2: Medical History */}
-        {step === 2 && (
-          <Card className="border-cyan-500/30 bg-slate-900/80 backdrop-blur p-6 mb-6">
-            <h2 className="text-2xl font-bold text-white mb-6">Step 2: Past Medical History</h2>
-            <p className="text-gray-300 mb-6">Please provide your medical history for more accurate analysis. (Optional)</p>
+            <Button
+              onClick={() => setStep(2)}
+              disabled={symptoms.length === 0}
+              className="w-full bg-cyan-500 hover:bg-cyan-600 text-white"
+            >
+              Next: Medical History
+            </Button>
+          </div>
+        );
+
+      case 2:
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-white mb-4">Past Medical History</h2>
 
             {/* Allergies */}
-            <div className="mb-6">
-              <label className="block text-cyan-300 font-semibold mb-2">Allergies</label>
-              <div className="flex gap-2 mb-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Allergies</label>
+              <div className="flex gap-2 mb-2">
                 <Input
                   type="text"
-                  placeholder="e.g., Penicillin"
                   value={newAllergy}
                   onChange={(e) => setNewAllergy(e.target.value)}
-                  className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500 flex-1"
+                  placeholder="e.g., Penicillin, Peanuts"
+                  className="bg-slate-800 border-slate-700 text-white"
                 />
-                <Button onClick={handleAddAllergy} className="bg-cyan-500 hover:bg-cyan-600 text-white">
+                <Button onClick={addAllergy} className="bg-cyan-500 hover:bg-cyan-600">
                   Add
                 </Button>
               </div>
-              {medicalHistory.allergies.length > 0 && (
+              {medicalHistory.allergies && medicalHistory.allergies.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {medicalHistory.allergies.map((allergy, idx) => (
-                    <div key={idx} className="bg-cyan-500/20 text-cyan-300 px-3 py-1 rounded-full flex items-center gap-2">
+                    <div key={idx} className="bg-orange-500/20 text-orange-300 px-3 py-1 rounded-full flex items-center gap-2">
                       {allergy}
-                      <button onClick={() => handleRemoveAllergy(idx)} className="text-cyan-400 hover:text-cyan-200">
-                        ×
+                      <button onClick={() => removeAllergy(idx)} className="text-orange-400 hover:text-orange-300">
+                        <X className="h-3 w-3" />
                       </button>
                     </div>
                   ))}
@@ -462,27 +367,27 @@ export default function PatientIntake() {
             </div>
 
             {/* Chronic Conditions */}
-            <div className="mb-6">
-              <label className="block text-cyan-300 font-semibold mb-2">Chronic Conditions</label>
-              <div className="flex gap-2 mb-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Chronic Conditions</label>
+              <div className="flex gap-2 mb-2">
                 <Input
                   type="text"
-                  placeholder="e.g., Diabetes, Hypertension"
                   value={newCondition}
                   onChange={(e) => setNewCondition(e.target.value)}
-                  className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500 flex-1"
+                  placeholder="e.g., Diabetes, Hypertension"
+                  className="bg-slate-800 border-slate-700 text-white"
                 />
-                <Button onClick={handleAddCondition} className="bg-cyan-500 hover:bg-cyan-600 text-white">
+                <Button onClick={addCondition} className="bg-cyan-500 hover:bg-cyan-600">
                   Add
                 </Button>
               </div>
-              {medicalHistory.chronicConditions.length > 0 && (
+              {medicalHistory.chronicConditions && medicalHistory.chronicConditions.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {medicalHistory.chronicConditions.map((condition, idx) => (
-                    <div key={idx} className="bg-cyan-500/20 text-cyan-300 px-3 py-1 rounded-full flex items-center gap-2">
+                    <div key={idx} className="bg-blue-500/20 text-blue-300 px-3 py-1 rounded-full flex items-center gap-2">
                       {condition}
-                      <button onClick={() => handleRemoveCondition(idx)} className="text-cyan-400 hover:text-cyan-200">
-                        ×
+                      <button onClick={() => removeCondition(idx)} className="text-blue-400 hover:text-blue-300">
+                        <X className="h-3 w-3" />
                       </button>
                     </div>
                   ))}
@@ -491,27 +396,27 @@ export default function PatientIntake() {
             </div>
 
             {/* Surgical History */}
-            <div className="mb-6">
-              <label className="block text-cyan-300 font-semibold mb-2">Surgical History</label>
-              <div className="flex gap-2 mb-3">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Surgical History</label>
+              <div className="flex gap-2 mb-2">
                 <Input
                   type="text"
-                  placeholder="e.g., Appendectomy"
                   value={newSurgery}
                   onChange={(e) => setNewSurgery(e.target.value)}
-                  className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500 flex-1"
+                  placeholder="e.g., Appendectomy, Knee surgery"
+                  className="bg-slate-800 border-slate-700 text-white"
                 />
-                <Button onClick={handleAddSurgery} className="bg-cyan-500 hover:bg-cyan-600 text-white">
+                <Button onClick={addSurgery} className="bg-cyan-500 hover:bg-cyan-600">
                   Add
                 </Button>
               </div>
-              {medicalHistory.surgicalHistory.length > 0 && (
+              {medicalHistory.surgicalHistory && medicalHistory.surgicalHistory.length > 0 && (
                 <div className="flex flex-wrap gap-2">
                   {medicalHistory.surgicalHistory.map((surgery, idx) => (
-                    <div key={idx} className="bg-cyan-500/20 text-cyan-300 px-3 py-1 rounded-full flex items-center gap-2">
+                    <div key={idx} className="bg-purple-500/20 text-purple-300 px-3 py-1 rounded-full flex items-center gap-2">
                       {surgery}
-                      <button onClick={() => handleRemoveAllergy(idx)} className="text-cyan-400 hover:text-cyan-200">
-                        ×
+                      <button onClick={() => removeSurgery(idx)} className="text-purple-400 hover:text-purple-300">
+                        <X className="h-3 w-3" />
                       </button>
                     </div>
                   ))}
@@ -520,67 +425,61 @@ export default function PatientIntake() {
             </div>
 
             {/* Family History */}
-            <div className="mb-6">
-              <label className="block text-cyan-300 font-semibold mb-2">Family History</label>
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Family History (Optional)</label>
               <Textarea
-                placeholder="e.g., Father had heart disease, Mother has diabetes"
-                value={medicalHistory.familyHistory}
-                onChange={(e) =>
-                  setMedicalHistory({
-                    ...medicalHistory,
-                    familyHistory: e.target.value,
-                  })
-                }
-                className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500 min-h-24"
+                value={medicalHistory.familyHistory || ""}
+                onChange={(e) => setMedicalHistory({ ...medicalHistory, familyHistory: e.target.value })}
+                placeholder="e.g., Father had heart disease, mother has diabetes"
+                className="bg-slate-800 border-slate-700 text-white"
               />
             </div>
 
             {/* Current Medications */}
-            <div className="mb-6">
-              <label className="block text-cyan-300 font-semibold mb-2">Current Medications</label>
-              <div className="space-y-3 mb-3">
-                <div className="flex gap-2">
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-2">Current Medications</label>
+              <div className="space-y-2 mb-2">
+                <Input
+                  type="text"
+                  value={currentMedication.name}
+                  onChange={(e) => setCurrentMedication({ ...currentMedication, name: e.target.value })}
+                  placeholder="Medication name"
+                  className="bg-slate-800 border-slate-700 text-white"
+                />
+                <div className="grid grid-cols-2 gap-2">
                   <Input
                     type="text"
-                    placeholder="Medication name"
-                    value={currentMedication.name}
-                    onChange={(e) => setCurrentMedication({ ...currentMedication, name: e.target.value })}
-                    className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500 flex-1"
-                  />
-                  <Input
-                    type="text"
-                    placeholder="Dosage"
                     value={currentMedication.dosage}
                     onChange={(e) => setCurrentMedication({ ...currentMedication, dosage: e.target.value })}
-                    className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500 flex-1"
+                    placeholder="Dosage"
+                    className="bg-slate-800 border-slate-700 text-white"
                   />
                   <Input
                     type="text"
-                    placeholder="Frequency"
                     value={currentMedication.frequency}
                     onChange={(e) => setCurrentMedication({ ...currentMedication, frequency: e.target.value })}
-                    className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500 flex-1"
+                    placeholder="Frequency"
+                    className="bg-slate-800 border-slate-700 text-white"
                   />
                 </div>
-                <Button onClick={handleAddMedication} className="w-full bg-cyan-500 hover:bg-cyan-600 text-white">
+                <Button onClick={addMedication} className="w-full bg-cyan-500 hover:bg-cyan-600">
                   Add Medication
                 </Button>
               </div>
-              {medicalHistory.currentMedications.length > 0 && (
-                <div className="space-y-2">
+              {medicalHistory.currentMedications && medicalHistory.currentMedications.length > 0 && (
+                <div className="bg-slate-800/50 rounded-lg p-3 space-y-2">
                   {medicalHistory.currentMedications.map((med, idx) => (
-                    <div key={idx} className="flex items-center justify-between bg-slate-800 p-3 rounded-lg border border-cyan-500/20">
-                      <div>
-                        <p className="text-white font-medium">{med.name}</p>
-                        <p className="text-sm text-gray-400">{med.dosage} - {med.frequency}</p>
-                      </div>
+                    <div key={idx} className="flex justify-between items-center bg-slate-700/50 p-2 rounded">
+                      <span className="text-gray-300">
+                        {med.name} - {med.dosage} ({med.frequency})
+                      </span>
                       <Button
-                        onClick={() => handleRemoveMedication(idx)}
+                        onClick={() => removeMedication(idx)}
                         variant="ghost"
                         size="sm"
-                        className="text-red-400 hover:bg-red-500/10"
+                        className="text-red-400 hover:text-red-300"
                       >
-                        Remove
+                        <X className="h-4 w-4" />
                       </Button>
                     </div>
                   ))}
@@ -588,263 +487,201 @@ export default function PatientIntake() {
               )}
             </div>
 
-            <div className="flex gap-4">
-              <Button
-                onClick={() => setStep(1)}
-                variant="outline"
-                className="flex-1 border-cyan-500 text-cyan-300 hover:bg-cyan-500/10"
-              >
+            <div className="flex gap-2">
+              <Button onClick={() => setStep(1)} variant="outline" className="flex-1">
                 Back
               </Button>
-              <Button
-                onClick={() => setStep(3)}
-                className="flex-1 bg-gradient-to-r from-cyan-500 to-orange-500 hover:from-cyan-600 hover:to-orange-600 text-white"
-              >
+              <Button onClick={() => setStep(3)} className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white">
                 Next: Vital Signs
               </Button>
             </div>
-          </Card>
-        )}
+          </div>
+        );
 
-        {/* Step 3: Vital Signs */}
-        {step === 3 && (
-          <Card className="border-cyan-500/30 bg-slate-900/80 backdrop-blur p-6 mb-6">
-            <h2 className="text-2xl font-bold text-white mb-6 flex items-center gap-2">
-              <Thermometer className="h-6 w-6 text-orange-400" />
-              <Heart className="h-6 w-6 text-red-400" />
-              Step 3: Vital Signs
-            </h2>
-            <p className="text-gray-300 mb-6">Please provide your current vital signs for more accurate analysis. (Optional)</p>
+      case 3:
+        return (
+          <div className="space-y-4">
+            <h2 className="text-2xl font-bold text-white mb-4">Vital Signs & Symptom Photos</h2>
 
-            {/* Temperature */}
-            <div className="mb-6">
-              <label className="block text-cyan-300 font-semibold mb-2">
-                Temperature (°C or °F)
-              </label>
-              <div className="flex gap-2">
-                <Input
-                  type="number"
-                  placeholder="e.g., 37.5 or 98.6"
-                  value={vitalSigns.temperature}
-                  onChange={(e) =>
-                    setVitalSigns({ ...vitalSigns, temperature: e.target.value })
-                  }
-                  className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500 flex-1"
-                  step="0.1"
-                />
-                <span className="text-gray-400 flex items-center px-3 bg-slate-800 border border-cyan-500/30 rounded">°</span>
+            {/* Vital Signs */}
+            <div className="bg-slate-800/50 rounded-lg p-4 border border-cyan-500/30">
+              <h3 className="text-lg font-semibold text-cyan-300 mb-4 flex items-center gap-2">
+                <Heart className="h-5 w-5" />
+                Vital Signs (Optional)
+              </h3>
+
+              <div className="space-y-3">
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Temperature</label>
+                  <div className="flex gap-2">
+                    <Input
+                      type="number"
+                      value={vitalSigns.temperature}
+                      onChange={(e) => setVitalSigns({ ...vitalSigns, temperature: e.target.value })}
+                      placeholder="e.g., 37.5"
+                      step="0.1"
+                      className="bg-slate-800 border-slate-700 text-white flex-1"
+                    />
+                    <Select defaultValue="celsius">
+                      <SelectTrigger className="w-24 bg-slate-800 border-slate-700 text-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="celsius">°C</SelectItem>
+                        <SelectItem value="fahrenheit">°F</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Normal: 36.5-37.5°C (97.7-99.5°F)</p>
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-300 mb-1">Blood Pressure</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <div>
+                      <Input
+                        type="number"
+                        value={vitalSigns.systolic}
+                        onChange={(e) => setVitalSigns({ ...vitalSigns, systolic: e.target.value })}
+                        placeholder="Systolic"
+                        className="bg-slate-800 border-slate-700 text-white"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">Systolic (top)</p>
+                    </div>
+                    <div>
+                      <Input
+                        type="number"
+                        value={vitalSigns.diastolic}
+                        onChange={(e) => setVitalSigns({ ...vitalSigns, diastolic: e.target.value })}
+                        placeholder="Diastolic"
+                        className="bg-slate-800 border-slate-700 text-white"
+                      />
+                      <p className="text-xs text-gray-400 mt-1">Diastolic (bottom)</p>
+                    </div>
+                  </div>
+                  <p className="text-xs text-gray-400 mt-1">Normal: 120/80 mmHg</p>
+                </div>
               </div>
-              <p className="text-xs text-gray-400 mt-1">Normal: 36.5-37.5°C (97.7-99.5°F)</p>
-            </div>
-
-            {/* Blood Pressure */}
-            <div className="mb-6">
-              <label className="block text-cyan-300 font-semibold mb-2">
-                Blood Pressure (Systolic/Diastolic)
-              </label>
-              <div className="flex gap-2 items-center">
-                <Input
-                  type="number"
-                  placeholder="Systolic (e.g., 120)"
-                  value={vitalSigns.systolic}
-                  onChange={(e) =>
-                    setVitalSigns({ ...vitalSigns, systolic: e.target.value })
-                  }
-                  className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500 flex-1"
-                />
-                <span className="text-cyan-300 font-semibold">/</span>
-                <Input
-                  type="number"
-                  placeholder="Diastolic (e.g., 80)"
-                  value={vitalSigns.diastolic}
-                  onChange={(e) =>
-                    setVitalSigns({ ...vitalSigns, diastolic: e.target.value })
-                  }
-                  className="bg-slate-800 border-cyan-500/30 text-white placeholder-gray-500 flex-1"
-                />
-                <span className="text-gray-400 flex items-center px-3 bg-slate-800 border border-cyan-500/30 rounded">mmHg</span>
-              </div>
-              <p className="text-xs text-gray-400 mt-1">Normal: 120/80 mmHg</p>
-            </div>
-
-            {/* Optional note */}
-            <div className="bg-blue-500/10 border border-blue-500/30 rounded-lg p-3 mb-6">
-              <p className="text-sm text-blue-200">
-                💡 Tip: If you don't have access to a thermometer or blood pressure monitor, you can skip these fields and continue with the analysis.
-              </p>
             </div>
 
             {/* Symptom Photos */}
-            <div className="mb-6">
-              <label className="block text-cyan-300 font-semibold mb-2">
-                <Camera className="h-4 w-4 inline mr-2" />
+            <div className="bg-slate-800/50 rounded-lg p-4 border border-cyan-500/30">
+              <label className="text-lg font-semibold text-cyan-300 mb-3 flex items-center gap-2">
+                <Camera className="h-5 w-5" />
                 Symptom Photos (Optional)
               </label>
               <p className="text-sm text-gray-400 mb-3">Upload or capture photos of your symptoms to help with diagnosis</p>
-              
-              {/* Camera Preview */}
-              {cameraActive && (
-                <div className="mb-4 bg-slate-800 rounded-lg p-4">
-                  <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted
-                    webkit-playsinline
-                    style={{
-                      width: "100%",
-                      height: "400px",
-                      backgroundColor: "#000",
-                      borderRadius: "0.5rem",
-                      marginBottom: "0.75rem",
-                      transform: "scaleX(-1)",
-                      objectFit: "cover",
-                      display: "block",
-                      WebkitTransform: "scaleX(-1)"
-                    }}
-                  />
-                  <canvas 
-                    ref={canvasRef} 
-                    style={{ 
-                      width: "100%",
-                      height: "400px",
-                      backgroundColor: "#000",
-                      borderRadius: "0.5rem",
-                      marginBottom: "0.75rem",
-                      transform: "scaleX(-1)",
-                      objectFit: "cover",
-                      display: "block"
-                    }} 
-                  />
-                  <div className="flex gap-2">
-                    <Button
-                      onClick={capturePhoto}
-                      className="flex-1 bg-green-500 hover:bg-green-600 text-white"
-                    >
-                      Capture Photo
-                    </Button>
-                    <Button
-                      onClick={stopCamera}
-                      variant="outline"
-                      className="flex-1 border-red-500 text-red-400 hover:bg-red-500/10"
-                    >
-                      Cancel
-                    </Button>
-                  </div>
-                </div>
-              )}
 
-              {/* Upload/Camera Buttons */}
-              {!cameraActive && (
-                <div className="flex gap-2 mb-4">
-                  <Button
-                    onClick={startCamera}
-                    className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white flex items-center justify-center gap-2"
-                  >
-                    <Camera className="h-4 w-4" />
-                    Take Photo
-                  </Button>
-                  <Button
-                    onClick={() => fileInputRef.current?.click()}
-                    className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white flex items-center justify-center gap-2"
-                  >
-                    <Upload className="h-4 w-4" />
-                    Upload Photo
-                  </Button>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleFileUpload}
-                    className="hidden"
-                  />
-                </div>
-              )}
+              <div className="flex gap-2 mb-4">
+                <Button
+                  onClick={startCamera}
+                  className="flex-1 bg-cyan-500 hover:bg-cyan-600 text-white flex items-center justify-center gap-2"
+                >
+                  <Camera className="h-4 w-4" />
+                  Take Photo
+                </Button>
+                <Button
+                  onClick={() => fileInputRef.current?.click()}
+                  variant="outline"
+                  className="flex-1 flex items-center justify-center gap-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  Upload Photo
+                </Button>
+              </div>
 
               {/* Photo Gallery */}
               {symptomPhotos.length > 0 && (
                 <div className="grid grid-cols-2 gap-3">
                   {symptomPhotos.map((photo, idx) => (
-                    <div key={idx} className="relative bg-slate-800 rounded-lg overflow-hidden">
+                    <div key={idx} className="relative group">
                       <img
                         src={photo.preview}
                         alt={`Symptom ${idx + 1}`}
-                        className="w-full h-32 object-cover"
+                        className="w-full h-32 object-cover rounded-lg border border-cyan-500/30"
                       />
                       <button
                         onClick={() => removePhoto(idx)}
-                        className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 rounded-full p-1"
+                        className="absolute top-1 right-1 bg-red-500 hover:bg-red-600 text-white p-1 rounded opacity-0 group-hover:opacity-100 transition"
                       >
-                        <X className="h-4 w-4 text-white" />
+                        <X className="h-4 w-4" />
                       </button>
                     </div>
                   ))}
                 </div>
               )}
+
+              {/* Hidden file inputs */}
+              <input
+                ref={cameraInputRef}
+                type="file"
+                accept="image/*"
+                capture="environment"
+                onChange={handleCameraCapture}
+                className="hidden"
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={handleFileUpload}
+                className="hidden"
+              />
             </div>
 
-            {/* Language Selection */}
-            <div className="mb-6">
-              <label className="block text-cyan-300 font-semibold mb-2">
-                Preferred Language
-              </label>
-              <Select value={language} onValueChange={setLanguage}>
-                <SelectTrigger className="bg-slate-800 border-cyan-500/30 text-white">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent className="bg-slate-800 border-cyan-500/30">
-                  <SelectItem value="en">English</SelectItem>
-                  <SelectItem value="es">Español</SelectItem>
-                  <SelectItem value="fr">Français</SelectItem>
-                  <SelectItem value="de">Deutsch</SelectItem>
-                  <SelectItem value="it">Italiano</SelectItem>
-                  <SelectItem value="pt">Português</SelectItem>
-                  <SelectItem value="ja">日本語</SelectItem>
-                  <SelectItem value="zh">中文</SelectItem>
-                  <SelectItem value="ar">العربية</SelectItem>
-                  <SelectItem value="hi">हिन्दी</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="flex gap-4">
-              <Button
-                onClick={() => setStep(2)}
-                variant="outline"
-                className="flex-1 border-cyan-500 text-cyan-300 hover:bg-cyan-500/10"
-              >
+            <div className="flex gap-2">
+              <Button onClick={() => setStep(2)} variant="outline" className="flex-1">
                 Back
               </Button>
               <Button
                 onClick={handleSubmit}
                 disabled={isAnalyzing || symptoms.length === 0}
-                className="flex-1 bg-gradient-to-r from-cyan-500 to-orange-500 hover:from-cyan-600 hover:to-orange-600 text-white disabled:opacity-50"
+                className="flex-1 bg-green-500 hover:bg-green-600 text-white"
               >
                 {isAnalyzing ? (
                   <>
                     <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                    Analyzing ({elapsedSeconds}s)
+                    Analyzing... ({elapsedSeconds}s)
                   </>
                 ) : (
-                  "Submit & Analyze"
+                  "Analyze Symptoms"
                 )}
               </Button>
-              {isAnalyzing && (
-                <Button
-                  onClick={handleCancel}
-                  variant="outline"
-                  className="border-red-500 text-red-400 hover:bg-red-500/10"
-                >
-                  Cancel
-                </Button>
-              )}
             </div>
-          </Card>
-        )}
+          </div>
+        );
 
-        {/* Loading State */}
-        {isAnalyzing && <AnalysisLoading isLoading={isAnalyzing} />}
+      default:
+        return null;
+    }
+  };
+
+  if (isAnalyzing) {
+    return <AnalysisLoading elapsedSeconds={elapsedSeconds} isLoading={true} />;
+  }
+
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-teal-900 to-orange-900 p-4">
+      <div className="max-w-2xl mx-auto">
+        {/* Header */}
+        <div className="mb-8">
+          <h1 className="text-4xl font-bold text-white mb-2">Symptom Assessment</h1>
+          <p className="text-cyan-300">Step {step} of 3</p>
+        </div>
+
+        {/* Progress Bar */}
+        <div className="mb-8 bg-slate-800/50 rounded-full h-2 overflow-hidden">
+          <div
+            className="h-full bg-gradient-to-r from-cyan-500 to-orange-500 transition-all duration-300"
+            style={{ width: `${(step / 3) * 100}%` }}
+          ></div>
+        </div>
+
+        {/* Form */}
+        <Card className="bg-slate-900/50 border-cyan-500/30 backdrop-blur p-6">
+          {renderStep()}
+        </Card>
       </div>
     </div>
   );
