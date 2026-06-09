@@ -15,6 +15,7 @@ interface AnalysisResult {
   analysis: {
     possibleConditions: Array<{
       condition: string;
+      icd10Code: string;
       confidence: number;
       reasoning: string;
     }>;
@@ -236,9 +237,14 @@ export default function SymptomResults() {
                 className="border border-cyan-500/30 rounded-lg p-4 bg-slate-800/50 hover:bg-slate-800/70 transition"
               >
                 <div className="flex items-start justify-between mb-2">
-                  <h4 className="text-lg font-semibold text-cyan-300">
-                    {condition.condition}
-                  </h4>
+                  <div>
+                    <h4 className="text-lg font-semibold text-cyan-300">
+                      {condition.condition}
+                    </h4>
+                    <p className="text-xs text-gray-400 mt-1">
+                      ICD-10: <span className="font-mono text-cyan-400">{condition.icd10Code}</span>
+                    </p>
+                  </div>
                   <div className="flex items-center gap-2">
                     <div className="w-20 h-2 bg-slate-700 rounded-full overflow-hidden">
                       <div

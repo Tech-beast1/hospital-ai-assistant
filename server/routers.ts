@@ -361,13 +361,14 @@ Medical History:
 - Current Medications: ${input.medicalHistory.currentMedications?.map((m) => m.name).join(", ") || "None reported"}
 
 Provide a JSON response with:
-1. possibleConditions: Array of {condition, confidence (0-1), reasoning}
+1. possibleConditions: Array of {condition, icd10Code, confidence (0-1), reasoning}
+   - Include the ICD-10 diagnostic code for each condition (e.g., "J45.9" for asthma)
 2. urgencyLevel: "routine" | "moderate" | "urgent" | "critical"
 3. flagForReview: boolean (true if urgent or critical)
 4. recommendations: Array of initial recommendations
 5. disclaimers: Important medical disclaimers
 
-IMPORTANT: This is for clinical decision support only. Always emphasize that a licensed physician must make the final diagnosis.`;
+IMPORTANT: This is for clinical decision support only. Always emphasize that a licensed physician must make the final diagnosis. Include accurate ICD-10 codes for all conditions.`;
 
         const llmResponse = await invokeLLM({
           messages: [
@@ -395,10 +396,11 @@ IMPORTANT: This is for clinical decision support only. Always emphasize that a l
                       type: "object",
                       properties: {
                         condition: { type: "string" },
+                        icd10Code: { type: "string" },
                         confidence: { type: "number" },
                         reasoning: { type: "string" },
                       },
-                      required: ["condition", "confidence", "reasoning"],
+                      required: ["condition", "icd10Code", "confidence", "reasoning"],
                     },
                   },
                   urgencyLevel: {
